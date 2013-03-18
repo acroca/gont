@@ -13,17 +13,23 @@ var (
   WORLD = initializeWorld()
 )
 
+const (
+  ANTS = 100
+  SIZE_X = 90
+  SIZE_Y = 20
+)
+
 func initializeWorld() (w *World) {
   world := &World{
-    SizeX: 40,
-    SizeY: 20,
+    SizeX: SIZE_X,
+    SizeY: SIZE_Y,
   }
   
   world.Points = make([]([]*Point), world.SizeX)
   for i:=0;i<world.SizeX;i++ {
     world.Points[i] = make([]*Point, world.SizeY)
     for j:=0;j<world.SizeY;j++ {
-      world.Points[i][j] = &Point{X: i, Y: j, Ants: make([]*Ant, 0)}
+      world.Points[i][j] = NewPoint(i,j)
     }
   }
   return world

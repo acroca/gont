@@ -2,12 +2,23 @@ package world
 
 import (
   "strconv"
+  "sync"
 )
 
 type Point struct {
   X int
   Y int
   Ants []*Ant
+  RWMutex *sync.RWMutex // TODO
+}
+
+func NewPoint(x int, y int) *Point{
+  return &Point{
+    X: x, 
+    Y: y, 
+    RWMutex: &sync.RWMutex{}, 
+    Ants: make([]*Ant, 0),
+  }
 }
 
 

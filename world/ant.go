@@ -2,10 +2,19 @@ package world
 
 import (
   "math/rand"
+  "time"
 )
 
+const (
+  BASE_SPEED = 30
+)
 type Ant struct {
   Point *Point
+  Speed int
+}
+
+func NewAnt() *Ant {
+  return &Ant{Speed: (rand.Int() % 20) + BASE_SPEED}
 }
 
 func (a *Ant) ToString() string {
@@ -13,6 +22,15 @@ func (a *Ant) ToString() string {
 }
 
 func (a *Ant) MoveTo(p *Point) {
+  if a.Point == p { return }
+
+  if a.Point != nil {
+    a.Point.RWMutex.Lock()
+    defer a.Point.RWMutex.Unlock()
+  }
+  p.RWMutex.Lock()
+  defer p.RWMutex.Unlock()
+
   if a.Point != nil {
     a.Point.DeleteAnt(a)
   }
@@ -21,7 +39,10 @@ func (a *Ant) MoveTo(p *Point) {
 }
 
 func (a *Ant) Move() {
-  a.MoveRand()
+  for ; ; {
+    time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
+    a.MoveRand()
+  }
 }
 
 func (a *Ant) MoveRand() {
