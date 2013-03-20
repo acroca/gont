@@ -10,9 +10,14 @@ import (
 func main(){
   rand.Seed( time.Now().UTC().UnixNano())
   ants := make([]*world.Ant, world.ANTS)
+  hole := world.WORLD.Points[world.SIZE_X/2][world.SIZE_Y/2]
+
+  hole.HasHole = true
+
   for i := 0; i<world.ANTS; i++ {
     ants[i] = world.NewAnt()
-    ants[i].MoveTo(world.WORLD.Points[world.SIZE_X/2][world.SIZE_Y/2])
+    ants[i].MoveTo(hole)
+    fmt.Println("A")
     go ants[i].Move()
   }
 

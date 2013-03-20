@@ -10,6 +10,7 @@ type Point struct {
   Y int
   Ants []*Ant
   HasFood bool
+  HasHole bool
   RWMutex *sync.RWMutex // TODO
 }
 
@@ -20,6 +21,7 @@ func NewPoint(x int, y int) *Point{
     RWMutex: &sync.RWMutex{}, 
     Ants: make([]*Ant, 0),
     HasFood: false,
+    HasHole: false,
   }
 }
 
@@ -49,7 +51,10 @@ func (p *Point) ToString() string {
     char = " "
   }
 
-  if p.HasFood {
+  if p.HasHole {
+    if char == " " { char = "O" }
+    char = "\x1b[34m" + char + "\x1b[0m"
+  } else if p.HasFood {
     if char == " " { char = "*" }
     char = "\x1b[32m" + char + "\x1b[0m"
   }

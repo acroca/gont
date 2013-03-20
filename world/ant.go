@@ -11,10 +11,14 @@ const (
 type Ant struct {
   Point *Point
   Speed int
+  HasFood bool
 }
 
 func NewAnt() *Ant {
-  return &Ant{Speed: (rand.Int() % 20) + BASE_SPEED}
+  return &Ant{
+    Speed: (rand.Int() % 20) + BASE_SPEED,
+    HasFood: false,
+  }
 }
 
 func (a *Ant) ToString() string {
@@ -22,17 +26,18 @@ func (a *Ant) ToString() string {
 }
 
 func (a *Ant) MoveTo(p *Point) {
-  if a.Point == p { return }
+  origin_point := a.Point
+  if origin_point == p { return }
 
-  if a.Point != nil { a.Point.RWMutex.Lock() }
+  if origin_point != nil { origin_point.RWMutex.Lock() }
   p.RWMutex.Lock()
 
-  if a.Point != nil { a.Point.DeleteAnt(a) }
+  if origin_point != nil { origin_point.DeleteAnt(a) }
   a.Point = p
   p.AddAnt(a)
 
   p.RWMutex.Unlock()
-  if a.Point != nil { a.Point.RWMutex.Unlock() }
+  if origin_point != nil { origin_point.RWMutex.Unlock() }
 
   if p.HasFood { a.HasFood = true }
 }
@@ -44,6 +49,9 @@ func (a *Ant) Move() {
   }
 }
 
+func (a *Ant) MoveHole() {
+
+}
 func (a *Ant) MoveRand() {
   changeX := a.Point.X + (rand.Int() % 3) - 1
   changeY := a.Point.Y + (rand.Int() % 3) - 1
