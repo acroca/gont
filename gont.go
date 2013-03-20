@@ -21,7 +21,7 @@ func main(){
     go ants[i].Move()
   }
 
-  for i := 0; i<100; i++ {
+  for ; ; {
     fmt.Println(world.WORLD.ToString())
     time.Sleep(50 * time.Millisecond)
   }
