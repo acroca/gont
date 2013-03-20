@@ -6,7 +6,7 @@ import (
 )
 
 const (
-  BASE_SPEED = 30
+  BASE_SPEED = 40
 )
 type Ant struct {
   Point *Point
@@ -24,18 +24,17 @@ func (a *Ant) ToString() string {
 func (a *Ant) MoveTo(p *Point) {
   if a.Point == p { return }
 
-  if a.Point != nil {
-    a.Point.RWMutex.Lock()
-    defer a.Point.RWMutex.Unlock()
-  }
+  if a.Point != nil { a.Point.RWMutex.Lock() }
   p.RWMutex.Lock()
-  defer p.RWMutex.Unlock()
 
-  if a.Point != nil {
-    a.Point.DeleteAnt(a)
-  }
+  if a.Point != nil { a.Point.DeleteAnt(a) }
   a.Point = p
   p.AddAnt(a)
+
+  p.RWMutex.Unlock()
+  if a.Point != nil { a.Point.RWMutex.Unlock() }
+
+  if p.HasFood { a.HasFood = true }
 }
 
 func (a *Ant) Move() {
