@@ -46,13 +46,35 @@ func (a *Ant) MoveTo(p *Point) {
 func (a *Ant) Move() {
   for ; ; {
     time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
-    a.MoveRand()
+    if a.HasFood {
+      a.MoveHole()
+    } else {
+      a.MoveFood()
+    }
   }
 }
 
 func (a *Ant) MoveHole() {
-
+  a.MoveRand()
 }
+
+func (a *Ant) MoveFood() {
+  adjacent := a.Point.AdjacentPoints()
+
+  bestPoint := adjacent[0]
+
+  for _, p := range adjacent {
+
+    if p != nil && p.FoodPheromones > bestPoint.FoodPheromones { bestPoint = p }
+  }
+
+  if bestPoint.FoodPheromones > 0 {
+    a.MoveTo(bestPoint)
+  } else {
+    a.MoveRand()
+  }
+}
+
 func (a *Ant) MoveRand() {
   changeX := a.Point.X + (rand.Int() % 3) - 1
   changeY := a.Point.Y + (rand.Int() % 3) - 1
@@ -65,6 +87,16 @@ func (a *Ant) MoveRand() {
 
 func (a *Ant) DropFoodPheromones() {
   adjacentPoints := a.Point.AdjacentPoints()
+
+  a.Point.RWMutex.Lock()
+  if a.Point.FoodPheromones == 0 {
+    a.Point.FoodPheromones = 0.1
+  } else {
+    a.Point.FoodPheromones *= 1.2
+    if a.Point.FoodPheromones > 1 { a.Point.FoodPheromones = 1 }
+  }
+  a.Point.RWMutex.Unlock()
+
   for _, p := range adjacentPoints {
     if p != nil {
       p.RWMutex.Lock()

@@ -3,6 +3,7 @@ package world
 import (
   "strconv"
   "sync"
+  "time"
 )
 
 type Point struct {
@@ -16,7 +17,7 @@ type Point struct {
 }
 
 func NewPoint(x int, y int) *Point{
-  return &Point{
+  point := &Point{
     X: x, 
     Y: y, 
     RWMutex: &sync.RWMutex{}, 
@@ -25,6 +26,8 @@ func NewPoint(x int, y int) *Point{
     HasHole: false,
     FoodPheromones: 0,
   }
+  go point.EvaporatePheromones()
+  return point
 }
 
 
@@ -89,4 +92,16 @@ func (p *Point) ToString() string {
   }
 
   return char
+}
+
+func (p *Point) EvaporatePheromones() {
+  for ; ; {
+    time.Sleep(100 * time.Millisecond)
+    p.RWMutex.Lock()
+    p.FoodPheromones *= 0.97
+    if p.FoodPheromones < 0.1 {
+      p.FoodPheromones = 0
+    }  
+    p.RWMutex.Unlock()
+  }
 }
