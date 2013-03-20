@@ -9,6 +9,7 @@ type Point struct {
   X int
   Y int
   Ants []*Ant
+  HasFood bool
   RWMutex *sync.RWMutex // TODO
 }
 
@@ -18,6 +19,7 @@ func NewPoint(x int, y int) *Point{
     Y: y, 
     RWMutex: &sync.RWMutex{}, 
     Ants: make([]*Ant, 0),
+    HasFood: false,
   }
 }
 
@@ -37,9 +39,20 @@ func (p *Point) DeleteAnt(ant *Ant) {
 
 func (p *Point) ToString() string {
   length := len(p.Ants)
-  if length > 0 {
-    return strconv.Itoa(length)
-  }
-  return " "
-}
+  var char string
 
+  if length >= 10 {
+    char = "#"
+  } else if length > 0 {
+    char = strconv.Itoa(length)
+  } else {
+    char = " "
+  }
+
+  if p.HasFood {
+    if char == " " { char = "*" }
+    char = "\x1b[32m" + char + "\x1b[0m"
+  }
+
+  return char
+}
