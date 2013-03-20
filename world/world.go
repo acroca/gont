@@ -33,6 +33,8 @@ func initializeWorld() (w *World) {
     }
   }
   world.Points[70][30].HasFood = true
+  world.Points[90][30].HasFood = true
+  world.Points[120][30].HasFood = true
   return world
 }
 

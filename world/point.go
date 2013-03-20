@@ -11,6 +11,7 @@ type Point struct {
   Ants []*Ant
   HasFood bool
   HasHole bool
+  FoodPheromones float64
   RWMutex *sync.RWMutex // TODO
 }
 
@@ -22,6 +23,7 @@ func NewPoint(x int, y int) *Point{
     Ants: make([]*Ant, 0),
     HasFood: false,
     HasHole: false,
+    FoodPheromones: 0,
   }
 }
 
@@ -37,6 +39,28 @@ func (p *Point) DeleteAnt(ant *Ant) {
       return
     }
   }
+}
+
+func (p *Point) AdjacentPoints() (res []*Point) {
+  points := make([]*Point, 8)
+  var startX int
+  var startY int
+  var endX int
+  var endY int
+
+  if p.X == 0 { startX = 0 } else { startX = p.X - 1 }
+  if p.Y == 0 { startY = 0 } else { startY = p.Y - 1 }
+  if p.X == (WORLD.SizeX-1) { endX =(WORLD.SizeX-1) } else { endX = p.X + 1 }
+  if p.Y == (WORLD.SizeY-1) { endY =(WORLD.SizeY-1) } else { endY = p.Y + 1 }
+
+  i := 0
+  for x := startX; x < endX; x++ {
+    for y := startY; y < endY; y++ {
+      points[i] = WORLD.Points[x][y]
+      i++
+    }
+  }
+  return points
 }
 
 func (p *Point) ToString() string {
@@ -56,6 +80,9 @@ func (p *Point) ToString() string {
     char = "\x1b[34m" + char + "\x1b[0m"
   } else if p.HasFood {
     if char == " " { char = "*" }
+    char = "\x1b[32m" + char + "\x1b[0m"
+  } else if p.FoodPheromones > 0 {
+    if char == " " { char = "~" }
     char = "\x1b[32m" + char + "\x1b[0m"
   }
 

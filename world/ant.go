@@ -40,6 +40,7 @@ func (a *Ant) MoveTo(p *Point) {
   if origin_point != nil { origin_point.RWMutex.Unlock() }
 
   if p.HasFood { a.HasFood = true }
+  if a.HasFood { a.DropFoodPheromones() }
 }
 
 func (a *Ant) Move() {
@@ -60,4 +61,20 @@ func (a *Ant) MoveRand() {
   if changeY >= WORLD.SizeY { changeY = WORLD.SizeY - 1 }
   if changeX >= WORLD.SizeX { changeX = WORLD.SizeX - 1 }
   a.MoveTo(WORLD.Points[changeX][changeY])
+}
+
+func (a *Ant) DropFoodPheromones() {
+  adjacentPoints := a.Point.AdjacentPoints()
+  for _, p := range adjacentPoints {
+    if p != nil {
+      p.RWMutex.Lock()
+      if p.FoodPheromones == 0 {
+        p.FoodPheromones = 0.1
+      } else {
+        p.FoodPheromones *= 1.1
+        if p.FoodPheromones > 1 { p.FoodPheromones = 1 }
+      }
+      p.RWMutex.Unlock()
+    }
+  }
 }
