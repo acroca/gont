@@ -54,10 +54,12 @@ func (p *Point) AdjacentPoints() (res []*Point) {
   if p.Y == (WORLD.SizeY-1) { endY =(WORLD.SizeY-1) } else { endY = p.Y + 1 }
 
   i := 0
-  for x := startX; x < endX; x++ {
-    for y := startY; y < endY; y++ {
-      points[i] = WORLD.Points[x][y]
-      i++
+  for x := startX; x <= endX; x++ {
+    for y := startY; y <= endY; y++ {
+      if ! (p.X == x && p.Y == y) {
+        points[i] = WORLD.Points[x][y]
+        i++
+      }
     }
   }
   return points
