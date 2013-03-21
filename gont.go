@@ -3,11 +3,17 @@ package main
 import (
   "math/rand"
   "time"
-  "fmt"
   "gont/world"
+  "gont/ui"
 )
 
-func main(){
+func main() {
+  game()
+  ui := ui.NewUI(world.WORLD)
+  ui.Init()
+}
+
+func game(){
   rand.Seed( time.Now().UTC().UnixNano())
   ants := make([]*world.Ant, world.ANTS)
   hole := world.WORLD.Points[world.SIZE_X/2][world.SIZE_Y/2]
@@ -17,12 +23,6 @@ func main(){
   for i := 0; i<world.ANTS; i++ {
     ants[i] = world.NewAnt()
     ants[i].MoveTo(hole)
-    fmt.Println("A")
     go ants[i].Move()
-  }
-
-  for ; ; {
-    fmt.Println(world.WORLD.ToString())
-    time.Sleep(50 * time.Millisecond)
   }
 }
