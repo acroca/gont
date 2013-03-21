@@ -6,7 +6,7 @@ import (
 )
 
 const (
-  BASE_SPEED = 40
+  BASE_SPEED = 10
 )
 type Ant struct {
   Point *Point
@@ -40,7 +40,7 @@ func (a *Ant) MoveTo(p *Point) {
   if origin_point != nil { origin_point.RWMutex.Unlock() }
 
   if p.HasFood { a.HasFood = true }
-  if a.HasFood { a.DropFoodPheromones() }
+  a.DropPheromones()
 }
 
 func (a *Ant) Move() {
@@ -55,17 +55,14 @@ func (a *Ant) Move() {
 }
 
 func (a *Ant) MoveHole() {
-  a.MoveRand()
-}
-
-func (a *Ant) MoveFood() {
   adjacent := a.Point.AdjacentPoints()
 
   bestPoint := adjacent[0]
 
   for _, p := range adjacent {
-
-    if p != nil && p.FoodPheromones > bestPoint.FoodPheromones { bestPoint = p }
+    if p != nil && p.PresencePheromones > bestPoint.PresencePheromones {
+     bestPoint = p 
+    }
   }
 
   if bestPoint.FoodPheromones > 0 {
@@ -73,6 +70,29 @@ func (a *Ant) MoveFood() {
   } else {
     a.MoveRand()
   }
+}
+
+func (a *Ant) MoveFood() {
+  bestPoint := a.bestFoodPoint()
+
+  if bestPoint.HasFood || bestPoint.FoodPheromones > 0 {
+    a.MoveTo(bestPoint)
+  } else {
+    a.MoveRand()
+  }
+}
+
+func (a *Ant) bestFoodPoint() *Point {
+  adjacent := a.Point.AdjacentPoints()
+  bestPoint := adjacent[0]
+
+  for _, p := range adjacent {
+    if p != nil {
+      if p.HasFood { return p }
+      if p.FoodPheromones > bestPoint.FoodPheromones { bestPoint = p }
+    }
+  }
+  return bestPoint
 }
 
 func (a *Ant) MoveRand() {
@@ -85,28 +105,46 @@ func (a *Ant) MoveRand() {
   a.MoveTo(WORLD.Points[changeX][changeY])
 }
 
-func (a *Ant) DropFoodPheromones() {
+func (a *Ant) DropPheromones() {
   adjacentPoints := a.Point.AdjacentPoints()
 
   a.Point.RWMutex.Lock()
-  if a.Point.FoodPheromones == 0 {
-    a.Point.FoodPheromones = 0.1
-  } else {
-    a.Point.FoodPheromones *= 1.2
-    if a.Point.FoodPheromones > 1 { a.Point.FoodPheromones = 1 }
-  }
-  a.Point.RWMutex.Unlock()
 
-  for _, p := range adjacentPoints {
-    if p != nil {
-      p.RWMutex.Lock()
-      if p.FoodPheromones == 0 {
-        p.FoodPheromones = 0.1
-      } else {
-        p.FoodPheromones *= 1.1
-        if p.FoodPheromones > 1 { p.FoodPheromones = 1 }
+  if a.HasFood {
+    if a.Point.FoodPheromones == 0 {
+      a.Point.FoodPheromones = 0.1
+    } else {
+      a.Point.FoodPheromones *= 1.2
+      if a.Point.FoodPheromones > 1 { a.Point.FoodPheromones = 1 }
+    }
+    for _, p := range adjacentPoints {
+      if p != nil {
+        if p.FoodPheromones == 0 {
+          p.FoodPheromones = 0.1
+        } else {
+          p.FoodPheromones *= 1.1
+          if p.FoodPheromones > 1 { p.FoodPheromones = 1 }
+        }
       }
-      p.RWMutex.Unlock()
+    }
+  } else {
+    if a.Point.PresencePheromones == 0 {
+      a.Point.PresencePheromones = 0.1
+    } else {
+      a.Point.PresencePheromones *= 1.1
+      if a.Point.PresencePheromones > 1 { a.Point.PresencePheromones = 1 }
+    }
+    for _, p := range adjacentPoints {
+      if p != nil {
+        if a.Point.PresencePheromones == 0 {
+          a.Point.PresencePheromones = 0.1
+        } else {
+          a.Point.PresencePheromones *= 1.05
+          if a.Point.PresencePheromones > 1 { a.Point.PresencePheromones = 1 }
+        }
+      }
     }
   }
+
+  a.Point.RWMutex.Unlock()
 }

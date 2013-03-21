@@ -13,6 +13,7 @@ type Point struct {
   HasFood bool
   HasHole bool
   FoodPheromones float64
+  PresencePheromones float64
   RWMutex *sync.RWMutex // TODO
 }
 
@@ -25,6 +26,7 @@ func NewPoint(x int, y int) *Point{
     HasFood: false,
     HasHole: false,
     FoodPheromones: 0,
+    PresencePheromones: 0,
   }
   go point.EvaporatePheromones()
   return point
@@ -89,6 +91,9 @@ func (p *Point) ToString() string {
   } else if p.FoodPheromones > 0 {
     if char == " " { char = "~" }
     char = "\x1b[32m" + char + "\x1b[0m"
+  } else if p.PresencePheromones > 0 {
+    if char == " " { char = "!" }
+    char = "\x1b[32m" + char + "\x1b[0m"
   }
 
   return char
@@ -98,6 +103,10 @@ func (p *Point) EvaporatePheromones() {
   for ; ; {
     time.Sleep(100 * time.Millisecond)
     p.RWMutex.Lock()
+    p.PresencePheromones *= 0.97
+    if p.PresencePheromones < 0.1 {
+      p.PresencePheromones = 0
+    }  
     p.FoodPheromones *= 0.97
     if p.FoodPheromones < 0.1 {
       p.FoodPheromones = 0
