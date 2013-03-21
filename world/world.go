@@ -15,8 +15,8 @@ var (
 
 const (
   ANTS = 100
-  SIZE_X = 173
-  SIZE_Y = 45
+  SIZE_X = 128
+  SIZE_Y = 96
 )
 
 func initializeWorld() (w *World) {
@@ -32,9 +32,10 @@ func initializeWorld() (w *World) {
       world.Points[i][j] = NewPoint(i,j)
     }
   }
-  world.Points[70][30].HasFood = true
-  world.Points[90][30].HasFood = true
-  world.Points[120][30].HasFood = true
+  world.Points[(SIZE_X*2)/3][(SIZE_Y*2)/3].HasFood = true
+  world.Points[SIZE_X/3][SIZE_Y/3].HasFood = true
+  world.Points[SIZE_X/3][(SIZE_Y*2)/3].HasFood = true
+  world.Points[(SIZE_X*2)/3][SIZE_Y/3].HasFood = true
   return world
 }
 
