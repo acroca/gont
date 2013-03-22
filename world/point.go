@@ -1,12 +1,12 @@
 package world
 
 import (
-  "strconv"
   "sync"
   "time"
 )
 
 type Point struct {
+  World *World
   X int
   Y int
   Ants []*Ant
@@ -17,8 +17,9 @@ type Point struct {
   RWMutex *sync.RWMutex // TODO
 }
 
-func NewPoint(x int, y int) *Point{
+func NewPoint(world *World, x int, y int) *Point{
   point := &Point{
+    World: world, 
     X: x, 
     Y: y, 
     RWMutex: &sync.RWMutex{}, 
@@ -55,48 +56,19 @@ func (p *Point) AdjacentPoints() (res []*Point) {
 
   if p.X == 0 { startX = 0 } else { startX = p.X - 1 }
   if p.Y == 0 { startY = 0 } else { startY = p.Y - 1 }
-  if p.X == (WORLD.SizeX-1) { endX =(WORLD.SizeX-1) } else { endX = p.X + 1 }
-  if p.Y == (WORLD.SizeY-1) { endY =(WORLD.SizeY-1) } else { endY = p.Y + 1 }
+  if p.X == (p.World.SizeX-1) { endX =(p.World.SizeX-1) } else { endX = p.X + 1 }
+  if p.Y == (p.World.SizeY-1) { endY =(p.World.SizeY-1) } else { endY = p.Y + 1 }
 
   i := 0
   for x := startX; x <= endX; x++ {
     for y := startY; y <= endY; y++ {
       if ! (p.X == x && p.Y == y) {
-        points[i] = WORLD.Points[x][y]
+        points[i] = p.World.Points[x][y]
         i++
       }
     }
   }
   return points
-}
-
-func (p *Point) ToString() string {
-  length := len(p.Ants)
-  var char string
-
-  if length >= 10 {
-    char = "#"
-  } else if length > 0 {
-    char = strconv.Itoa(length)
-  } else {
-    char = " "
-  }
-
-  if p.HasHole {
-    if char == " " { char = "O" }
-    char = "\x1b[34m" + char + "\x1b[0m"
-  } else if p.HasFood {
-    if char == " " { char = "*" }
-    char = "\x1b[32m" + char + "\x1b[0m"
-  } else if p.FoodPheromones > 0 {
-    if char == " " { char = "~" }
-    char = "\x1b[32m" + char + "\x1b[0m"
-  } else if p.PresencePheromones > 0 {
-    if char == " " { char = "!" }
-    char = "\x1b[32m" + char + "\x1b[0m"
-  }
-
-  return char
 }
 
 func (p *Point) EvaporatePheromones() {

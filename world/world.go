@@ -9,54 +9,26 @@ type World struct {
   Points []([]*Point)
 }
 
-var (
-  WORLD = initializeWorld()
-)
-
-const (
-  ANTS = 100
-  SIZE_X = 128
-  SIZE_Y = 96
-)
-
-func initializeWorld() (w *World) {
-  world := &World{
-    SizeX: SIZE_X,
-    SizeY: SIZE_Y,
+func InitializeWorld(sizeX int, sizeY int) *World {
+  w := &World{
+    SizeX: sizeX,
+    SizeY: sizeY,
   }
   
-  world.Points = make([]([]*Point), world.SizeX)
-  for i:=0;i<world.SizeX;i++ {
-    world.Points[i] = make([]*Point, world.SizeY)
-    for j:=0;j<world.SizeY;j++ {
-      world.Points[i][j] = NewPoint(i,j)
+  w.Points = make([]([]*Point), w.SizeX)
+  for i:=0;i<w.SizeX;i++ {
+    w.Points[i] = make([]*Point, w.SizeY)
+    for j:=0;j<w.SizeY;j++ {
+      w.Points[i][j] = NewPoint(w, i,j)
     }
   }
-  world.Points[(SIZE_X*2)/3][(SIZE_Y*2)/3].HasFood = true
-  world.Points[SIZE_X/3][SIZE_Y/3].HasFood = true
-  world.Points[SIZE_X/3][(SIZE_Y*2)/3].HasFood = true
-  world.Points[(SIZE_X*2)/3][SIZE_Y/3].HasFood = true
-  return world
-}
+  w.Points[(sizeX*2)/3][(sizeY*2)/3].HasFood = true
+  w.Points[sizeX/3][sizeY/3].HasFood = true
+  w.Points[sizeX/3][(sizeY*2)/3].HasFood = true
+  w.Points[(sizeX*2)/3][sizeY/3].HasFood = true
 
-func (w *World) ToString() string {
-  r := ""
-  for i:=0;i<w.SizeY+2;i++ {
-    r += "\r"
-  }
-  for i:=0;i<w.SizeX+2;i++ {
-    r += "+"
-  }
-  r += "\n"
-  for j:=0;j<w.SizeY;j++ {
-    r += "+"
-    for i:=0;i<w.SizeX;i++ {
-      r += w.Points[i][j].ToString()
-    }
-    r += "+\n"
-  }
-  for i:=0;i<w.SizeX+2;i++ {
-    r += "+"
-  }
-  return r
+  hole := w.Points[w.SizeX/2][w.SizeY/2]
+  hole.HasHole = true
+  
+  return w
 }

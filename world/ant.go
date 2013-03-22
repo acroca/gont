@@ -9,20 +9,18 @@ const (
   BASE_SPEED = 10
 )
 type Ant struct {
+  World *World
   Point *Point
   Speed int
   HasFood bool
 }
 
-func NewAnt() *Ant {
+func NewAnt(world *World) *Ant {
   return &Ant{
+    World: world,
     Speed: (rand.Int() % 20) + BASE_SPEED,
     HasFood: false,
   }
-}
-
-func (a *Ant) ToString() string {
-  return "Hi!"
 }
 
 func (a *Ant) MoveTo(p *Point) {
@@ -100,9 +98,9 @@ func (a *Ant) MoveRand() {
   changeY := a.Point.Y + (rand.Int() % 3) - 1
   if changeY < 0 { changeY = 0 }
   if changeX < 0 { changeX = 0 }
-  if changeY >= WORLD.SizeY { changeY = WORLD.SizeY - 1 }
-  if changeX >= WORLD.SizeX { changeX = WORLD.SizeX - 1 }
-  a.MoveTo(WORLD.Points[changeX][changeY])
+  if changeY >= a.World.SizeY { changeY = a.World.SizeY - 1 }
+  if changeX >= a.World.SizeX { changeX = a.World.SizeX - 1 }
+  a.MoveTo(a.World.Points[changeX][changeY])
 }
 
 func (a *Ant) DropPheromones() {

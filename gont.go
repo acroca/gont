@@ -7,22 +7,25 @@ import (
   "gont/ui"
 )
 
+const (
+  SIZE_X = 128
+  SIZE_Y = 96
+  ANTS = 100
+)
 func main() {
-  game()
-  ui := ui.NewUI(world.WORLD)
-  ui.Init()
-}
-
-func game(){
   rand.Seed( time.Now().UTC().UnixNano())
-  ants := make([]*world.Ant, world.ANTS)
-  hole := world.WORLD.Points[world.SIZE_X/2][world.SIZE_Y/2]
+  w := world.InitializeWorld(128,96)
 
+  hole := w.Points[w.SizeX/2][w.SizeY/2]
   hole.HasHole = true
-
-  for i := 0; i<world.ANTS; i++ {
-    ants[i] = world.NewAnt()
+  
+  ants := make([]*world.Ant, ANTS)
+  for i := 0; i<ANTS; i++ {
+    ants[i] = world.NewAnt(w)
     ants[i].MoveTo(hole)
     go ants[i].Move()
   }
+
+  ui := ui.NewUI(w)
+  ui.Init()
 }
