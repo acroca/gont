@@ -75,8 +75,6 @@ func (ui *Ui) initScene() (err error) {
   gl.MatrixMode(gl.MODELVIEW)
   gl.LoadIdentity()
 
-  gl.PointSize(3.0)
-
   return
 }
 
@@ -88,8 +86,7 @@ func (ui *Ui) drawScene() {
 
   // gl.MatrixMode(gl.MODELVIEW)
   gl.LoadIdentity()
-  gl.Translatef(-5, -5, -6)
-
+  gl.Translatef(-5, -5, -5.1)
 
   for _, points := range ui.World.Points {
     for _, point := range points {
@@ -106,9 +103,10 @@ func (ui *Ui) drawScene() {
 }
 
 func (ui *Ui) drawAnts(p *world.Point){
+  gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
   gl.Begin(gl.POINTS)
 
-  gl.Color3f(0, 1, 0.5)
+  gl.Color3f(0.3, 0.7, 0.5)
   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
 
@@ -139,12 +137,14 @@ func (ui *Ui) drawPheromones(p *world.Point){
   } else {
     return    
   }
+  mulX := gl.Float(4.5 / float64(ui.World.SizeX))
+  mulY := gl.Float(4.5 / float64(ui.World.SizeY))
 
   gl.Begin(gl.QUADS)
   // gl.Normal3f(baseX, baseY,1)
-  gl.Vertex2f(baseX-0.04, baseY-0.04)
-  gl.Vertex2f(baseX+0.04, baseY-0.04)
-  gl.Vertex2f(baseX+0.04, baseY+0.04)
-  gl.Vertex2f(baseX-0.04, baseY+0.04)
+  gl.Vertex2f(baseX-mulX, baseY-mulY)
+  gl.Vertex2f(baseX+mulX, baseY-mulY)
+  gl.Vertex2f(baseX+mulX, baseY+mulY)
+  gl.Vertex2f(baseX-mulX, baseY+mulY)
   gl.End()
 }

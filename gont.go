@@ -8,13 +8,13 @@ import (
 )
 
 const (
-  SIZE_X = 128
-  SIZE_Y = 96
+  SIZE_X = 128/2
+  SIZE_Y = 96/2
   ANTS = 100
 )
 func main() {
   rand.Seed( time.Now().UTC().UnixNano())
-  w := world.InitializeWorld(128,96)
+  w := world.InitializeWorld(SIZE_X, SIZE_Y)
 
   hole := w.Points[w.SizeX/2][w.SizeY/2]
   hole.HasHole = true
