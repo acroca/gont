@@ -1,8 +1,10 @@
 package world
 
 import (
+  "math"
   "math/rand"
   "time"
+  "fmt"
 )
 
 const (
@@ -11,6 +13,7 @@ const (
 type Ant struct {
   World *World
   Point *Point
+  LastPoint *Point
   Speed int
   HasFood bool
 }
@@ -18,7 +21,7 @@ type Ant struct {
 func NewAnt(world *World) *Ant {
   return &Ant{
     World: world,
-    Speed: (rand.Int() % 20) + BASE_SPEED,
+    Speed: (rand.Int() % 10) + BASE_SPEED,
     HasFood: false,
   }
 }
@@ -31,6 +34,7 @@ func (a *Ant) MoveTo(p *Point) {
   p.RWMutex.Lock()
 
   if origin_point != nil { origin_point.DeleteAnt(a) }
+  a.LastPoint = a.Point
   a.Point = p
   p.AddAnt(a)
 
@@ -44,56 +48,67 @@ func (a *Ant) MoveTo(p *Point) {
 func (a *Ant) Move() {
   for ; ; {
     time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
-    if a.HasFood {
-      a.MoveHole()
-    } else {
-      a.MoveFood()
+    p := a.bestPoint()
+    if p == nil {
+      a.MoveRand()
+    }else{
+      a.MoveTo(p)
     }
   }
 }
 
-func (a *Ant) MoveHole() {
+func (a *Ant) bestPoint() *Point {
+  return nil
   adjacent := a.Point.AdjacentPoints()
-
-  bestPoint := adjacent[0]
-
-  for _, p := range adjacent {
-    if p != nil && p.PresencePheromones > bestPoint.PresencePheromones {
-     bestPoint = p 
-    }
-  }
-
-  if bestPoint.FoodPheromones > 0 {
-    a.MoveTo(bestPoint)
-  } else {
-    a.MoveRand()
-  }
-}
-
-func (a *Ant) MoveFood() {
-  bestPoint := a.bestFoodPoint()
-
-  if bestPoint.HasFood || bestPoint.FoodPheromones > 0 {
-    a.MoveTo(bestPoint)
-  } else {
-    a.MoveRand()
-  }
-}
-
-func (a *Ant) bestFoodPoint() *Point {
-  adjacent := a.Point.AdjacentPoints()
-  bestPoint := adjacent[0]
+  var bestPoint *Point
 
   for _, p := range adjacent {
     if p != nil {
       if p.HasFood { return p }
-      if p.FoodPheromones > bestPoint.FoodPheromones { bestPoint = p }
+      if p.Pheromones > 0 && (bestPoint == nil || p.Pheromones > bestPoint.Pheromones) { bestPoint = p } 
     }
   }
   return bestPoint
 }
 
 func (a *Ant) MoveRand() {
+  if a.LastPoint == nil { 
+    a.MoveAnywhere()
+  } else {
+    diffX := a.Point.X - a.LastPoint.X
+    diffY := a.Point.Y - a.LastPoint.Y
+    changeX := a.Point.X + diffX
+    changeY := a.Point.Y + diffY
+    fmt.Printf("Diff: %v,%v\n", diffX, diffY)
+    if math.Abs(float64(diffX)) == math.Abs(float64(diffY)) { // means corner-to-corner
+      rnd := rand.Int() % 3
+      switch{
+      case rnd == 0:
+        // Do nothing
+      case rnd == 1:
+        changeX = a.Point.X
+      case rnd == 2:
+        changeY = a.Point.Y
+      }
+    } else { // Vertical or horizontal
+      if diffX == 0{
+        changeX += (rand.Int() % 3) - 1
+      } else {
+        changeY += (rand.Int() % 3) - 1
+      }
+    }
+    if changeY < 0 || changeX < 0 || changeY >= a.World.SizeY || changeX >= a.World.SizeX { 
+      a.MoveAnywhere()
+    }else{
+      if changeX == a.Point.X && changeY == a.Point.Y {
+        a.MoveRand()
+      } else { 
+        a.MoveTo(a.World.Points[changeX][changeY]) 
+      }      
+    }
+  }
+}
+func (a *Ant) MoveAnywhere() {
   changeX := a.Point.X + (rand.Int() % 3) - 1
   changeY := a.Point.Y + (rand.Int() % 3) - 1
   if changeY < 0 { changeY = 0 }
@@ -107,42 +122,14 @@ func (a *Ant) DropPheromones() {
   adjacentPoints := a.Point.AdjacentPoints()
 
   a.Point.RWMutex.Lock()
+  a.Point.Pheromones += 0.02
+  a.Point.RWMutex.Unlock()
 
-  if a.HasFood {
-    if a.Point.FoodPheromones == 0 {
-      a.Point.FoodPheromones = 0.1
-    } else {
-      a.Point.FoodPheromones *= 1.2
-      if a.Point.FoodPheromones > 1 { a.Point.FoodPheromones = 1 }
-    }
-    for _, p := range adjacentPoints {
-      if p != nil {
-        if p.FoodPheromones == 0 {
-          p.FoodPheromones = 0.1
-        } else {
-          p.FoodPheromones *= 1.1
-          if p.FoodPheromones > 1 { p.FoodPheromones = 1 }
-        }
-      }
-    }
-  } else {
-    if a.Point.PresencePheromones == 0 {
-      a.Point.PresencePheromones = 0.1
-    } else {
-      a.Point.PresencePheromones *= 1.1
-      if a.Point.PresencePheromones > 1 { a.Point.PresencePheromones = 1 }
-    }
-    for _, p := range adjacentPoints {
-      if p != nil {
-        if a.Point.PresencePheromones == 0 {
-          a.Point.PresencePheromones = 0.1
-        } else {
-          a.Point.PresencePheromones *= 1.05
-          if a.Point.PresencePheromones > 1 { a.Point.PresencePheromones = 1 }
-        }
-      }
+  for _, p := range adjacentPoints {
+    if p != nil {
+      p.RWMutex.Lock()
+      p.Pheromones += 0.01
+      p.RWMutex.Unlock()
     }
   }
-
-  a.Point.RWMutex.Unlock()
 }

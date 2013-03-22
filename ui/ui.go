@@ -126,20 +126,14 @@ func (ui *Ui) drawFood(p *world.Point){
 }
 
 func (ui *Ui) drawPheromones(p *world.Point){
+  if p.Pheromones < 0.1 { return }
 
   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
-
-  if p.FoodPheromones > 0 {
-    gl.Color3f(0, gl.Float(p.FoodPheromones), 0)
-  } else if p.PresencePheromones > 0 {
-    gl.Color3f(gl.Float(p.PresencePheromones), 0, 0)
-  } else {
-    return    
-  }
   mulX := gl.Float(4.5 / float64(ui.World.SizeX))
   mulY := gl.Float(4.5 / float64(ui.World.SizeY))
 
+  gl.Color3f(0, gl.Float(p.Pheromones), 0)
   gl.Begin(gl.QUADS)
   // gl.Normal3f(baseX, baseY,1)
   gl.Vertex2f(baseX-mulX, baseY-mulY)

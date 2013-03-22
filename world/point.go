@@ -12,8 +12,7 @@ type Point struct {
   Ants []*Ant
   HasFood bool
   HasHole bool
-  FoodPheromones float64
-  PresencePheromones float64
+  Pheromones float64
   RWMutex *sync.RWMutex // TODO
 }
 
@@ -26,8 +25,7 @@ func NewPoint(world *World, x int, y int) *Point{
     Ants: make([]*Ant, 0),
     HasFood: false,
     HasHole: false,
-    FoodPheromones: 0,
-    PresencePheromones: 0,
+    Pheromones: 0,
   }
   go point.EvaporatePheromones()
   return point
@@ -74,14 +72,10 @@ func (p *Point) AdjacentPoints() (res []*Point) {
 func (p *Point) EvaporatePheromones() {
   for ; ; {
     time.Sleep(100 * time.Millisecond)
-    p.RWMutex.Lock()
-    p.PresencePheromones *= 0.97
-    if p.PresencePheromones < 0.1 {
-      p.PresencePheromones = 0
-    }  
-    p.FoodPheromones *= 0.97
-    if p.FoodPheromones < 0.1 {
-      p.FoodPheromones = 0
+    p.RWMutex.Lock() 
+    p.Pheromones *= 0.97
+    if p.Pheromones < 0.1 {
+      p.Pheromones = 0
     }  
     p.RWMutex.Unlock()
   }
