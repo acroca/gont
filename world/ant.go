@@ -4,18 +4,18 @@ import (
   "math"
   "math/rand"
   "time"
-  "fmt"
 )
 
 const (
-  BASE_SPEED = 10
+  BASE_SPEED = 60
 )
 type Ant struct {
   World *World
   Point *Point
-  LastPoint *Point
+  FacingPoint *Point
   Speed int
   HasFood bool
+  HappinessSteps int
 }
 
 func NewAnt(world *World) *Ant {
@@ -23,6 +23,7 @@ func NewAnt(world *World) *Ant {
     World: world,
     Speed: (rand.Int() % 10) + BASE_SPEED,
     HasFood: false,
+    HappinessSteps: 0,
   }
 }
 
@@ -34,9 +35,27 @@ func (a *Ant) MoveTo(p *Point) {
   p.RWMutex.Lock()
 
   if origin_point != nil { origin_point.DeleteAnt(a) }
-  a.LastPoint = a.Point
+
+  diffX := 0
+  diffY := 0
+  if a.Point != nil {
+    diffX = p.X - a.Point.X
+    diffY = p.Y - a.Point.Y
+    a.FacingPoint = a.World.PointAt(p.X + diffX, p.Y + diffY)
+  }
   a.Point = p
   p.AddAnt(a)
+
+  if !a.HasFood && p.HasFood {
+    a.HasFood = true
+    a.FacingPoint = a.World.PointAt(p.X - diffX, p.Y - diffY)
+    a.HappinessSteps = 200
+  }
+  if a.HasFood && p.HasHole {
+    a.HasFood = false
+    a.FacingPoint = a.World.PointAt(p.X - diffX, p.Y - diffY)
+    a.HappinessSteps = 200
+  }
 
   p.RWMutex.Unlock()
   if origin_point != nil { origin_point.RWMutex.Unlock() }
@@ -48,87 +67,90 @@ func (a *Ant) MoveTo(p *Point) {
 func (a *Ant) Move() {
   for ; ; {
     time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
-    p := a.bestPoint()
-    if p == nil {
-      a.MoveRand()
-    }else{
-      a.MoveTo(p)
-    }
+    p := a.bestCandidatePoint()
+    a.MoveTo(p)
   }
 }
 
-func (a *Ant) bestPoint() *Point {
-  return nil
-  adjacent := a.Point.AdjacentPoints()
-  var bestPoint *Point
-
-  for _, p := range adjacent {
-    if p != nil {
-      if p.HasFood { return p }
-      if p.Pheromones > 0 && (bestPoint == nil || p.Pheromones > bestPoint.Pheromones) { bestPoint = p } 
-    }
+func (a *Ant) candidatePoints() []*Point {
+  if a.FacingPoint == nil {
+    return a.Point.AdjacentPoints()
   }
-  return bestPoint
-}
+  
+  candidates := make([]*Point, 3)
+  candidates[0] = a.FacingPoint
 
-func (a *Ant) MoveRand() {
-  if a.LastPoint == nil { 
-    a.MoveAnywhere()
+  diffX := a.FacingPoint.X - a.Point.X
+  diffY := a.FacingPoint.Y - a.Point.Y
+
+
+  if math.Abs(float64(diffX)) == math.Abs(float64(diffY)) { // means corner-to-corner
+    candidates[1] = a.World.PointAt(a.FacingPoint.X, a.Point.Y)
+    candidates[2] = a.World.PointAt(a.Point.X, a.FacingPoint.Y)
   } else {
-    diffX := a.Point.X - a.LastPoint.X
-    diffY := a.Point.Y - a.LastPoint.Y
-    changeX := a.Point.X + diffX
-    changeY := a.Point.Y + diffY
-    fmt.Printf("Diff: %v,%v\n", diffX, diffY)
-    if math.Abs(float64(diffX)) == math.Abs(float64(diffY)) { // means corner-to-corner
-      rnd := rand.Int() % 3
-      switch{
-      case rnd == 0:
-        // Do nothing
-      case rnd == 1:
-        changeX = a.Point.X
-      case rnd == 2:
-        changeY = a.Point.Y
-      }
-    } else { // Vertical or horizontal
-      if diffX == 0{
-        changeX += (rand.Int() % 3) - 1
-      } else {
-        changeY += (rand.Int() % 3) - 1
-      }
-    }
-    if changeY < 0 || changeX < 0 || changeY >= a.World.SizeY || changeX >= a.World.SizeX { 
-      a.MoveAnywhere()
-    }else{
-      if changeX == a.Point.X && changeY == a.Point.Y {
-        a.MoveRand()
-      } else { 
-        a.MoveTo(a.World.Points[changeX][changeY]) 
-      }      
+    if diffX == 0{
+      candidates[1] = a.World.PointAt(a.FacingPoint.X+1, a.FacingPoint.Y)
+      candidates[2] = a.World.PointAt(a.FacingPoint.X-1, a.FacingPoint.Y)
+    } else {
+      candidates[1] = a.World.PointAt(a.FacingPoint.X, a.FacingPoint.Y+1)
+      candidates[2] = a.World.PointAt(a.FacingPoint.X, a.FacingPoint.Y-1)
     }
   }
+
+  result := make([]*Point, 3)
+  i := 0
+  for _, c := range candidates {
+    if c != nil {
+      result[i] = c
+      i++
+    }
+  }
+
+  if i == 0{
+    return a.Point.AdjacentPoints()
+  }
+
+  return result[:i]
 }
-func (a *Ant) MoveAnywhere() {
-  changeX := a.Point.X + (rand.Int() % 3) - 1
-  changeY := a.Point.Y + (rand.Int() % 3) - 1
-  if changeY < 0 { changeY = 0 }
-  if changeX < 0 { changeX = 0 }
-  if changeY >= a.World.SizeY { changeY = a.World.SizeY - 1 }
-  if changeX >= a.World.SizeX { changeX = a.World.SizeX - 1 }
-  a.MoveTo(a.World.Points[changeX][changeY])
+
+func (a *Ant) bestCandidatePoint() *Point {
+  candidates := a.candidatePoints()
+  totalPheromones := 0.0
+  for _, candidate := range candidates {
+    if !a.HasFood && candidate.HasFood { return candidate }
+    if a.HasFood && candidate.HasHole { return candidate }
+    totalPheromones += candidate.Pheromones
+  }
+  if totalPheromones > 0{
+    rnd := (rand.Float64() * totalPheromones)
+    for _, candidate := range candidates {
+      rnd -= candidate.Pheromones
+      if rnd < 0 {
+        return candidate
+      }
+    }
+  }
+  return candidates[(rand.Int() % len(candidates))]
 }
 
 func (a *Ant) DropPheromones() {
-  adjacentPoints := a.Point.AdjacentPoints()
-
   a.Point.RWMutex.Lock()
-  a.Point.Pheromones += 0.02
+  mul := 0.1
+  if a.HasFood {
+    mul = 10.0
+  }
+  if a.HappinessSteps > 0 {
+    a.HappinessSteps--
+    mul = 40.0 
+  }
+  a.Point.Pheromones += 0.01 * mul
   a.Point.RWMutex.Unlock()
 
+  adjacentPoints := a.Point.AdjacentPoints()
   for _, p := range adjacentPoints {
     if p != nil {
       p.RWMutex.Lock()
-      p.Pheromones += 0.01
+      p.Pheromones += 0.00005 * mul
       p.RWMutex.Unlock()
     }
   }

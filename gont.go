@@ -8,9 +8,9 @@ import (
 )
 
 const (
-  SIZE_X = 128/2
-  SIZE_Y = 96/2
-  ANTS = 100
+  SIZE_X = 128
+  SIZE_Y = 96
+  ANTS = 500
 )
 func main() {
   rand.Seed( time.Now().UTC().UnixNano())
@@ -19,13 +19,17 @@ func main() {
   hole := w.Points[w.SizeX/2][w.SizeY/2]
   hole.HasHole = true
   
-  ants := make([]*world.Ant, ANTS)
-  for i := 0; i<ANTS; i++ {
-    ants[i] = world.NewAnt(w)
-    ants[i].MoveTo(hole)
-    go ants[i].Move()
-  }
-
+  go addAnts(w, hole, ANTS)
+  
   ui := ui.NewUI(w)
   ui.Init()
+}
+
+func addAnts(w *world.World, hole *world.Point, max int) {
+  for i := 0; i<max; i++ {
+    ant := world.NewAnt(w)
+    ant.MoveTo(hole)
+    go ant.Move()
+    time.Sleep(100 * time.Millisecond)
+  }
 }

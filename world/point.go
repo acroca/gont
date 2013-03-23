@@ -66,17 +66,25 @@ func (p *Point) AdjacentPoints() (res []*Point) {
       }
     }
   }
-  return points
+
+
+  result := make([]*Point, 8)
+  i = 0
+  for _, c := range points {
+    if c != nil {
+      result[i] = c
+      i++
+    }
+  }
+
+  return result[:i]
 }
 
 func (p *Point) EvaporatePheromones() {
   for ; ; {
     time.Sleep(100 * time.Millisecond)
     p.RWMutex.Lock() 
-    p.Pheromones *= 0.97
-    if p.Pheromones < 0.1 {
-      p.Pheromones = 0
-    }  
+    p.Pheromones *= 0.95
     p.RWMutex.Unlock()
   }
 }

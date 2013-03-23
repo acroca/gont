@@ -97,16 +97,35 @@ func (ui *Ui) drawScene() {
       if len(point.Ants) > 0 {
         ui.drawAnts(point)
       }
+      if point.HasHole {
+        ui.drawHole(point)
+      }
     }
   }
 
+}
+
+func (ui *Ui) drawHole(p *world.Point){
+  gl.PointSize(gl.Float(3700.0 / float64(ui.World.SizeX)))
+  gl.Begin(gl.POINTS)
+
+  gl.Color3f(0.7, 0.3, 0.3)
+  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
+  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+
+  gl.Vertex2f(baseX, baseY)
+  gl.End()
 }
 
 func (ui *Ui) drawAnts(p *world.Point){
   gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
   gl.Begin(gl.POINTS)
 
-  gl.Color3f(0.3, 0.7, 0.5)
+  if len(p.Ants) > 0 && p.Ants[0] != nil && p.Ants[0].HasFood {
+    gl.Color3f(0.3, 0.7, 0.5)
+  } else {
+    gl.Color3f(1, 0.2, 0.5)
+  }
   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
 
@@ -115,6 +134,7 @@ func (ui *Ui) drawAnts(p *world.Point){
 }
 
 func (ui *Ui) drawFood(p *world.Point){
+  gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
   gl.Begin(gl.POINTS)
 
   gl.Color3f(0, 1, 0)

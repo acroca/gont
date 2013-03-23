@@ -22,13 +22,21 @@ func InitializeWorld(sizeX int, sizeY int) *World {
       w.Points[i][j] = NewPoint(w, i,j)
     }
   }
-  w.Points[(sizeX*2)/3][(sizeY*2)/3].HasFood = true
-  w.Points[sizeX/3][sizeY/3].HasFood = true
-  w.Points[sizeX/3][(sizeY*2)/3].HasFood = true
-  w.Points[(sizeX*2)/3][sizeY/3].HasFood = true
+  // w.Points[(sizeX*2)/3][(sizeY*2)/3].HasFood = true
+  // w.Points[sizeX/3][sizeY/3].HasFood = true
+  // w.Points[sizeX/3][(sizeY*2)/3].HasFood = true
+  // w.Points[(sizeX*2)/3][sizeY/3].HasFood = true
+  w.Points[(sizeX*5)/6][(sizeY*5)/6].HasFood = true
 
   hole := w.Points[w.SizeX/2][w.SizeY/2]
   hole.HasHole = true
   
   return w
+}
+
+func (w *World) PointAt(x int, y int) *Point{
+  if x < 0 || y < 0 || x >= w.SizeX || y >= w.SizeY {
+    return nil
+  }
+  return w.Points[x][y]
 }
