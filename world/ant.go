@@ -16,14 +16,17 @@ type Ant struct {
   Speed int
   HasFood bool
   HappinessSteps int
+  Hunger int
 }
 
 func NewAnt(world *World) *Ant {
+  world.AntsCount++
   return &Ant{
     World: world,
     Speed: (rand.Int() % 10) + BASE_SPEED,
     HasFood: false,
     HappinessSteps: 0,
+    Hunger: 0,
   }
 }
 
@@ -55,6 +58,7 @@ func (a *Ant) MoveTo(p *Point) {
     a.HasFood = false
     a.FacingPoint = a.World.PointAt(p.X - diffX, p.Y - diffY)
     a.HappinessSteps = 200
+    a.Hunger = 0
   }
 
   p.RWMutex.Unlock()
@@ -62,14 +66,16 @@ func (a *Ant) MoveTo(p *Point) {
 
   if p.HasFood { a.HasFood = true }
   a.DropPheromones()
+  a.Hunger += 1
 }
 
 func (a *Ant) Move() {
-  for ; ; {
+  for ; a.Hunger < 1000 ;  {
     time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
     p := a.bestCandidatePoint()
     a.MoveTo(p)
   }
+  a.Point.DeleteAnt(a)
 }
 
 func (a *Ant) candidatePoints() []*Point {

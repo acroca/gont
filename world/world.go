@@ -7,12 +7,14 @@ type World struct {
   SizeX int
   SizeY int
   Points []([]*Point)
+  AntsCount int
 }
 
 func InitializeWorld(sizeX int, sizeY int) *World {
   w := &World{
     SizeX: sizeX,
     SizeY: sizeY,
+    AntsCount: 0,
   }
   
   w.Points = make([]([]*Point), w.SizeX)

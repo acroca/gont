@@ -26,10 +26,12 @@ func main() {
 }
 
 func addAnts(w *world.World, hole *world.Point, max int) {
-  for i := 0; i<max; i++ {
-    ant := world.NewAnt(w)
-    ant.MoveTo(hole)
-    go ant.Move()
+  for ; ; {
+    if w.AntsCount < max {
+      ant := world.NewAnt(w)
+      ant.MoveTo(hole)
+      go ant.Move()
+    }
     time.Sleep(100 * time.Millisecond)
   }
 }
