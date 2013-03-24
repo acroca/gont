@@ -7,7 +7,7 @@ import (
 )
 
 const (
-  BASE_SPEED = 60
+  BASE_SPEED = 100
 )
 type Ant struct {
   World *World
@@ -52,7 +52,7 @@ func (a *Ant) MoveTo(p *Point) {
   if !a.HasFood && p.HasFood {
     a.HasFood = true
     a.FacingPoint = a.World.PointAt(p.X - diffX, p.Y - diffY)
-    a.HappinessSteps = 200
+    // a.HappinessSteps = 200
   }
   if a.HasFood && p.HasHole {
     a.HasFood = false
@@ -141,23 +141,31 @@ func (a *Ant) bestCandidatePoint() *Point {
 
 func (a *Ant) DropPheromones() {
   a.Point.RWMutex.Lock()
-  mul := 0.1
+  mul := 1.0
   if a.HasFood {
-    mul = 10.0
+    mul = 20.0
   }
   if a.HappinessSteps > 0 {
     a.HappinessSteps--
-    mul = 40.0 
+    mul = 22.0 
   }
-  a.Point.Pheromones += 0.01 * mul
+  a.Point.Pheromones += 0.1 * mul
+  if a.Point.Pheromones > 1 {
+    a.Point.Pheromones = 1.0
+  }
+
   a.Point.RWMutex.Unlock()
 
-  adjacentPoints := a.Point.AdjacentPoints()
-  for _, p := range adjacentPoints {
-    if p != nil {
-      p.RWMutex.Lock()
-      p.Pheromones += 0.00005 * mul
-      p.RWMutex.Unlock()
-    }
-  }
+  // adjacentPoints := a.Point.AdjacentPoints()
+  // for _, p := range adjacentPoints {
+  //   if p != nil {
+  //     p.RWMutex.Lock()
+  //     p.Pheromones += 0.000005 * mul
+  //     if p.Pheromones > 1 {
+  //       p.Pheromones = 1.0
+  //     }
+  //     p.RWMutex.Unlock()
+  //   }
+  // }
+
 }
