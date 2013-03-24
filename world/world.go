@@ -1,6 +1,7 @@
 package world
 
 import (
+  "time"
 )
 
 type World struct {
@@ -33,6 +34,7 @@ func InitializeWorld(sizeX int, sizeY int) *World {
   hole := w.Points[w.SizeX/2][w.SizeY/2]
   hole.HasHole = true
   
+  go w.evaporatePheromones()
   return w
 }
 
@@ -41,4 +43,18 @@ func (w *World) PointAt(x int, y int) *Point{
     return nil
   }
   return w.Points[x][y]
+}
+
+func (w *World) evaporatePheromones() {
+  for ; ; {
+    time.Sleep(100 * time.Millisecond)
+    for _, points := range w.Points {
+      for _, point := range points {
+        point.RWMutex.Lock() 
+        point.Pheromones -= 0.02
+        // point.Pheromones *= 0.93
+        point.RWMutex.Unlock()
+      }
+    }
+  }
 }

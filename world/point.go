@@ -2,7 +2,6 @@ package world
 
 import (
   "sync"
-  "time"
 )
 
 type Point struct {
@@ -17,7 +16,7 @@ type Point struct {
 }
 
 func NewPoint(world *World, x int, y int) *Point{
-  point := &Point{
+  return &Point{
     World: world, 
     X: x, 
     Y: y, 
@@ -27,8 +26,6 @@ func NewPoint(world *World, x int, y int) *Point{
     HasHole: false,
     Pheromones: 0,
   }
-  go point.EvaporatePheromones()
-  return point
 }
 
 
@@ -78,13 +75,4 @@ func (p *Point) AdjacentPoints() (res []*Point) {
   }
 
   return result[:i]
-}
-
-func (p *Point) EvaporatePheromones() {
-  for ; ; {
-    time.Sleep(100 * time.Millisecond)
-    p.RWMutex.Lock() 
-    p.Pheromones *= 0.95
-    p.RWMutex.Unlock()
-  }
 }
