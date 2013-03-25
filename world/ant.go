@@ -7,15 +7,14 @@ import (
 )
 
 const (
-  BASE_SPEED = 30
+  BASE_SPEED = 70
   VARIABLE_SPEED = 10
+  VISIBLE_RANGE = 20
 )
 
 type Ant struct {
   World *World
-  Direction *Direction
-  Point *Point
-  FacingPoint *Point
+  Vector *Vector
   Speed int
   HasFood bool
   Hunger int
@@ -24,8 +23,7 @@ type Ant struct {
 func NewAnt(w *World, p *Point) *Ant {
   return &Ant{
     World: w,
-    Direction: RandomDirection(),
-    Point: p,
+    Vector: RandomVector(p.X, p.Y),
     Speed: (rand.Int() % VARIABLE_SPEED) + BASE_SPEED,
     HasFood: false,
     Hunger: 0,
@@ -37,7 +35,7 @@ func GenerateAnts(w *World){
     time.Sleep(100 * time.Millisecond)
     if w.Ants.Len() < w.MaxAnts {
       hole := w.Holes.Front().Value.(*Hole)
-      ant := NewAnt(w, &Point{X: hole.Point.X, Y: hole.Point.Y})
+      ant := NewAnt(w, hole.Point)
       w.Ants.PushBack(ant)
       go ant.Move()
     }
@@ -46,11 +44,12 @@ func GenerateAnts(w *World){
 
 func (a *Ant) Move() {
   for ; a.Hunger < 1000 ;  {
-    time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
-  
-    a.Point.Move(a.Direction)
-    a.Direction.Rotate((rand.Float64() * (math.Pi/2)) - (math.Pi/4))
-
+    for i:=0; i<20; i++ {
+      time.Sleep(time.Duration(1000/a.Speed) * time.Millisecond)
+      a.Vector.Move()
+    }
+    
+    a.Reorientate()
     a.DropPheromone()
   }
   for e := a.World.Ants.Front() ; e != nil ; e = e.Next() {
@@ -61,7 +60,11 @@ func (a *Ant) Move() {
   }
 }
 
+func (a *Ant) Reorientate() {
+  a.Vector.Rotate((rand.Float64() * (math.Pi/2)) - (math.Pi/4))
+}
+
 func (a *Ant) DropPheromone() {
-  pheromone := NewPheromone( &Point {X: a.Point.X, Y: a.Point.Y, })
+  pheromone := NewPheromone( &Point {X: a.Vector.Point.X, Y: a.Vector.Point.Y, })
   a.World.Pheromones.PushBack(pheromone)
 }

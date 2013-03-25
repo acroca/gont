@@ -8,9 +8,9 @@ import(
 const (
   MAX_AMOUNT = 100
 
-  EVAPORATION_TIME = 2 * time.Second
+  EVAPORATION_TIME = 10000 * time.Millisecond
   EVAPORATION_DELAY = 100 * time.Millisecond
-  EVAPORATION_AMOUNT = int((MAX_AMOUNT * EVAPORATION_TIME) / EVAPORATION_DELAY)
+  EVAPORATION_AMOUNT = int((MAX_AMOUNT * EVAPORATION_DELAY) / EVAPORATION_TIME)
 )
 
 type Pheromone struct {
@@ -28,9 +28,11 @@ func NewPheromone(p *Point) *Pheromone {
 func EvaporateAll(pheromones *list.List) {
   for ; ; {
     time.Sleep(EVAPORATION_DELAY)
-    for e := pheromones.Front(); e != nil; e = e.Next() {
+    var next *list.Element
+    for e := pheromones.Front(); e != nil; e = next {
       pheromone := e.Value.(*Pheromone)
       pheromone.Amount -= EVAPORATION_AMOUNT
+      next = e.Next()
       if pheromone.Amount < 0 { pheromones.Remove(e) }
     }
   }
