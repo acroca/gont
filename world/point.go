@@ -1,78 +1,13 @@
 package world
 
-import (
-  "sync"
-)
-
 type Point struct {
-  World *World
-  X int
-  Y int
-  Ants []*Ant
-  HasFood bool
-  HasHole bool
-  Pheromones float64
-  RWMutex *sync.RWMutex // TODO
+  X float64
+  Y float64
 }
 
-func NewPoint(world *World, x int, y int) *Point{
-  return &Point{
-    World: world, 
-    X: x, 
-    Y: y, 
-    RWMutex: &sync.RWMutex{}, 
-    Ants: make([]*Ant, 0),
-    HasFood: false,
-    HasHole: false,
-    Pheromones: 0,
-  }
-}
-
-
-func (p *Point) AddAnt(ant *Ant) {
-  p.Ants = append(p.Ants, ant)  
-}
-
-func (p *Point) DeleteAnt(ant *Ant) {
-  for idx, v := range p.Ants {
-    if v == ant {
-      p.Ants = append(p.Ants[:idx], p.Ants[idx+1:]...)
-      return
-    }
-  }
-}
-
-func (p *Point) AdjacentPoints() (res []*Point) {
-  points := make([]*Point, 8)
-  var startX int
-  var startY int
-  var endX int
-  var endY int
-
-  if p.X == 0 { startX = 0 } else { startX = p.X - 1 }
-  if p.Y == 0 { startY = 0 } else { startY = p.Y - 1 }
-  if p.X == (p.World.SizeX-1) { endX =(p.World.SizeX-1) } else { endX = p.X + 1 }
-  if p.Y == (p.World.SizeY-1) { endY =(p.World.SizeY-1) } else { endY = p.Y + 1 }
-
-  i := 0
-  for x := startX; x <= endX; x++ {
-    for y := startY; y <= endY; y++ {
-      if ! (p.X == x && p.Y == y) {
-        points[i] = p.World.Points[x][y]
-        i++
-      }
-    }
-  }
-
-
-  result := make([]*Point, 8)
-  i = 0
-  for _, c := range points {
-    if c != nil {
-      result[i] = c
-      i++
-    }
-  }
-
-  return result[:i]
+func (p *Point) Move(d *Direction) {
+  // p.X += d.X
+  // p.Y += d.Y
+  p.X += d.X * 0.1
+  p.Y += d.Y * 0.1
 }

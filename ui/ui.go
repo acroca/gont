@@ -88,40 +88,58 @@ func (ui *Ui) drawScene() {
   gl.LoadIdentity()
   gl.Translatef(-5, -5, -5.1)
 
-  for _, points := range ui.World.Points {
-    for _, point := range points {
-      ui.drawPheromones(point)
-      if point.HasFood{
-        ui.drawFood(point)
-      }
-      if len(point.Ants) > 0 {
-        ui.drawAnts(point)
-      }
-      if point.HasHole {
-        ui.drawHole(point)
-      }
-    }
+  for e := ui.World.Holes.Front() ; e != nil ; e = e.Next() {
+    hole := e.Value.(*world.Hole)
+    ui.drawHole(hole)
   }
+  for e := ui.World.Ants.Front() ; e != nil ; e = e.Next() {
+    ant := e.Value.(*world.Ant)
+    ui.drawAnts(ant)
+  }
+  // for _, points := range ui.World.Points {
+  //   for _, point := range points {
+  //     ui.drawPheromones(point)
+  //     if point.HasFood{
+  //       ui.drawFood(point)
+  //     }
+  //     if len(point.Ants) > 0 {
+  //       ui.drawAnts(point)
+  //     }
+  //     if point.HasHole {
+  //       ui.drawHole(point)
+  //     }
+  //   }
+  // }
 
 }
 
-func (ui *Ui) drawHole(p *world.Point){
+func (ui *Ui) drawHole(h *world.Hole){
+  p := h.Point
   gl.PointSize(gl.Float(3700.0 / float64(ui.World.SizeX)))
-  gl.Begin(gl.POINTS)
-
-  gl.Color3f(0.7, 0.3, 0.3)
   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
 
+  gl.Begin(gl.POINTS)
+
+  gl.Color3f(0.7, 0.3, 0.3)
   gl.Vertex2f(baseX, baseY)
+  gl.End()
+
+  gl.PointSize(gl.Float(1200.0 / float64(ui.World.SizeX)))
+
+  gl.Begin(gl.POINTS)
+  gl.Color3f(0,0,0)
+  gl.Vertex2f(baseX, baseY)
+
   gl.End()
 }
 
-func (ui *Ui) drawAnts(p *world.Point){
+func (ui *Ui) drawAnts(a *world.Ant){
+  p := a.Point
   gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
   gl.Begin(gl.POINTS)
 
-  if len(p.Ants) > 0 && p.Ants[0] != nil && p.Ants[0].HasFood {
+  if a.HasFood {
     gl.Color3f(0.3, 0.7, 0.5)
   } else {
     gl.Color3f(1, 0.2, 0.5)
@@ -133,32 +151,32 @@ func (ui *Ui) drawAnts(p *world.Point){
   gl.End()
 }
 
-func (ui *Ui) drawFood(p *world.Point){
-  gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
-  gl.Begin(gl.POINTS)
+// func (ui *Ui) drawFood(p *world.Point){
+//   gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
+//   gl.Begin(gl.POINTS)
 
-  gl.Color3f(0, 1, 0)
-  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
-  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+//   gl.Color3f(0, 1, 0)
+//   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
+//   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
 
-  gl.Vertex2f(baseX, baseY)
-  gl.End()
-}
+//   gl.Vertex2f(baseX, baseY)
+//   gl.End()
+// }
 
-func (ui *Ui) drawPheromones(p *world.Point){
-  if p.Pheromones < 0.1 { return }
+// func (ui *Ui) drawPheromones(p *world.Point){
+//   if p.Pheromones < 0.1 { return }
 
-  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
-  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
-  mulX := gl.Float(4.5 / float64(ui.World.SizeX))
-  mulY := gl.Float(4.5 / float64(ui.World.SizeY))
+//   baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
+//   baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+//   mulX := gl.Float(4.5 / float64(ui.World.SizeX))
+//   mulY := gl.Float(4.5 / float64(ui.World.SizeY))
 
-  gl.Color3f(0, gl.Float(p.Pheromones), 0)
-  gl.Begin(gl.QUADS)
-  // gl.Normal3f(baseX, baseY,1)
-  gl.Vertex2f(baseX-mulX, baseY-mulY)
-  gl.Vertex2f(baseX+mulX, baseY-mulY)
-  gl.Vertex2f(baseX+mulX, baseY+mulY)
-  gl.Vertex2f(baseX-mulX, baseY+mulY)
-  gl.End()
-}
+//   gl.Color3f(0, gl.Float(p.Pheromones), 0)
+//   gl.Begin(gl.QUADS)
+//   // gl.Normal3f(baseX, baseY,1)
+//   gl.Vertex2f(baseX-mulX, baseY-mulY)
+//   gl.Vertex2f(baseX+mulX, baseY-mulY)
+//   gl.Vertex2f(baseX+mulX, baseY+mulY)
+//   gl.Vertex2f(baseX-mulX, baseY+mulY)
+//   gl.End()
+// }
