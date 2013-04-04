@@ -12,6 +12,8 @@ const (
   Title  = "Spinning Gopher"
   Width  = 1024
   Height = 768
+  Scale  = 10
+  UiScale = 4
 )
 
 type Ui struct{
@@ -111,9 +113,9 @@ func (ui *Ui) drawScene() {
 
 func (ui *Ui) drawHole(h *world.Hole){
   p := h.Point
-  gl.PointSize(gl.Float(3700.0 / float64(ui.World.SizeX)))
-  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
-  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+  gl.PointSize(3.0 * UiScale)
+  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*Scale)
+  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*Scale)
 
   gl.Begin(gl.POINTS)
 
@@ -121,7 +123,7 @@ func (ui *Ui) drawHole(h *world.Hole){
   gl.Vertex2f(baseX, baseY)
   gl.End()
 
-  gl.PointSize(gl.Float(1200.0 / float64(ui.World.SizeX)))
+  gl.PointSize(1.2 * UiScale)
 
   gl.Begin(gl.POINTS)
   gl.Color3f(0,0,0)
@@ -132,9 +134,9 @@ func (ui *Ui) drawHole(h *world.Hole){
 
 func (ui *Ui) drawPheromone(p *world.Pheromone){
   point := p.Point
-  gl.PointSize(gl.Float(300.0 / float64(ui.World.SizeX)))
-  baseX := gl.Float((float64(point.X)/float64(ui.World.SizeX))*10)
-  baseY := gl.Float((float64(point.Y)/float64(ui.World.SizeY))*10)
+  gl.PointSize(0.5 * UiScale)
+  baseX := gl.Float((float64(point.X)/float64(ui.World.SizeX))*Scale)
+  baseY := gl.Float((float64(point.Y)/float64(ui.World.SizeY))*Scale)
   intensity := gl.Float((float64(p.Amount) / float64(world.MAX_AMOUNT)) + 0.1)
 
   gl.Begin(gl.POINTS)
@@ -146,9 +148,9 @@ func (ui *Ui) drawPheromone(p *world.Pheromone){
 
 func (ui *Ui) drawFood(f *world.Food){
   p := f.Point
-  gl.PointSize(gl.Float(1000.0 / float64(ui.World.SizeX)))
-  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10)
-  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+  gl.PointSize(1.8 * UiScale)
+  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*Scale)
+  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*Scale)
 
   gl.Begin(gl.POINTS)
 
@@ -159,7 +161,7 @@ func (ui *Ui) drawFood(f *world.Food){
 
 func (ui *Ui) drawAnts(a *world.Ant){
   p := a.Vector.Point
-  gl.PointSize(gl.Float(700.0 / float64(ui.World.SizeX)))
+  gl.PointSize(1.0 * UiScale)
   gl.Begin(gl.POINTS)
 
   if a.HasFood {
@@ -167,8 +169,8 @@ func (ui *Ui) drawAnts(a *world.Ant){
   } else {
     gl.Color3f(1, 0.2, 0.5)
   }
-  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*10) 
-  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*10)
+  baseX := gl.Float((float64(p.X)/float64(ui.World.SizeX))*Scale) 
+  baseY := gl.Float((float64(p.Y)/float64(ui.World.SizeY))*Scale)
 
   gl.Vertex2f(baseX, baseY)
   gl.End()
