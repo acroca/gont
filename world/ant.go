@@ -7,9 +7,10 @@ import (
 )
 
 const (
-  BASE_SPEED = 70
+  BASE_SPEED = 300
   VARIABLE_SPEED = 10
-  VISIBLE_RANGE = 20
+  VISIBLE_RANGE = 40
+  ARMS_RANGE = 10
 )
 
 type Ant struct {
@@ -30,7 +31,7 @@ func NewAnt(w *World, p *Point) *Ant {
 
 func GenerateAnts(w *World){
   for ; ; {
-    time.Sleep(400 * time.Millisecond)
+    time.Sleep(50 * time.Millisecond)
     if w.Ants.Len() < w.MaxAnts {
       hole := w.Holes.Front().Value.(*Hole)
       ant := NewAnt(w, hole.Point)
@@ -62,6 +63,36 @@ func (a *Ant) Reorientate() {
   // Calculate the sum of all the vectors, including the ant's vector
   // Ant points to that direction
 
+  if !a.HasFood {
+    for e:= a.World.Food.Front(); e != nil ; e = e.Next() {
+      food := e.Value.(*Food)
+      distance := Distance(food.Point, a.Vector.Point)
+      if distance <= ARMS_RANGE {
+        a.HasFood = true
+        a.Vector.Rotate(math.Pi)
+        return
+      } else if distance <= VISIBLE_RANGE {
+        a.Vector = VectorFromPoints(a.Vector.Point, food.Point)
+        a.Vector.Distance = 1.0
+        return
+      }
+    }
+  } else {
+    for e:= a.World.Holes.Front(); e != nil ; e = e.Next() {
+      hole := e.Value.(*Hole)
+      distance := Distance(hole.Point, a.Vector.Point)
+      if distance <= ARMS_RANGE {
+        a.HasFood = false
+        a.Vector.Rotate(math.Pi)
+        return
+      } else if distance <= VISIBLE_RANGE {
+        a.Vector = VectorFromPoints(a.Vector.Point, hole.Point)
+        a.Vector.Distance = 1.0
+        return
+      }
+    }
+  }
+
   for e:= a.World.Pheromones.Front(); e != nil ; e = e.Next() {
     pheromone := e.Value.(*Pheromone)
     distance := Distance(pheromone.Point, a.Vector.Point)
@@ -91,9 +122,16 @@ func (a *Ant) Reorientate() {
     }
   }
   if pheromonesVector != nil {
+    if a.HasFood {
+      pheromonesVector.Distance *= 100
+    }
     a.Vector = a.Vector.Sum(pheromonesVector)
   } else {
     a.Vector.Rotate((rand.Float64() * (math.Pi/4)) - (math.Pi/8))
+  }
+  next := a.Vector.TargetPoint()
+  if next.X < 0 || next.Y < 0 || next.X > float64(a.World.SizeX) || next.Y > float64(a.World.SizeY) {
+    a.Vector.Rotate(math.Pi)
   }
   a.Vector.Distance = 1.0
 }
