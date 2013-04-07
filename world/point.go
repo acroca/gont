@@ -12,3 +12,11 @@ type Point struct {
 func Distance(p1 *Point, p2 *Point) float64{
   return math.Sqrt( math.Pow(p1.X - p2.X, 2.0) + math.Pow(p1.Y - p2.Y, 2.0) )
 }
+
+func DistanceMax(p1 *Point, p2 *Point, max float64) (float64, bool) {
+  if math.Abs(p1.X - p2.X) > max || math.Abs(p1.Y - p2.Y) > max {
+    return -1, true
+  }
+  return Distance(p1, p2), false
+}
+

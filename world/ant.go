@@ -9,7 +9,7 @@ import (
 const (
   BASE_SPEED = 300
   VARIABLE_SPEED = 10
-  VISIBLE_RANGE = 40
+  VISIBLE_RANGE = 70
   ARMS_RANGE = 10
 )
 
@@ -66,15 +66,17 @@ func (a *Ant) Reorientate() {
   if !a.HasFood {
     for e:= a.World.Food.Front(); e != nil ; e = e.Next() {
       food := e.Value.(*Food)
-      distance := Distance(food.Point, a.Vector.Point)
-      if distance <= ARMS_RANGE {
-        a.HasFood = true
-        a.Vector.Rotate(math.Pi)
-        return
-      } else if distance <= VISIBLE_RANGE {
-        a.Vector = VectorFromPoints(a.Vector.Point, food.Point)
-        a.Vector.Distance = 1.0
-        return
+      distance, err := DistanceMax(food.Point, a.Vector.Point, VISIBLE_RANGE)
+      if !err {
+        if distance <= ARMS_RANGE {
+          a.HasFood = true
+          a.Vector.Rotate(math.Pi)
+          return
+        } else if distance <= VISIBLE_RANGE {
+          a.Vector = VectorFromPoints(a.Vector.Point, food.Point)
+          a.Vector.Distance = 1.0
+          return
+        }
       }
     }
   } else {

@@ -1,7 +1,6 @@
 package main
 
 import (
-  // "math"
   "math/rand"
   "time"
   "gont/world"
@@ -11,7 +10,7 @@ import (
 const (
   SIZE_X = 1280
   SIZE_Y = 960
-  ANTS = 20
+  ANTS = 100
 )
 func main() {
   rand.Seed( time.Now().UTC().UnixNano())
