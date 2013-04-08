@@ -139,6 +139,15 @@ func (a *Ant) Reorientate() {
 }
 
 func (a *Ant) DropPheromone() {
-  pheromone := NewPheromone( &Point {X: a.Vector.Point.X, Y: a.Vector.Point.Y, })
-  a.World.Pheromones.PushBack(pheromone)
+  pheromone := a.World.ClosestPheromoneWithin(a.Vector.Point, 5)
+  if pheromone != nil {
+    pheromone.Amount += UNIT_AMOUNT
+    if pheromone.Amount > MAX_AMOUNT {
+      pheromone.Amount = MAX_AMOUNT
+    }
+  } else {
+    pheromone = NewPheromone( &Point {X: a.Vector.Point.X, Y: a.Vector.Point.Y, })
+    pheromone.Amount *= 0.3
+    a.World.Pheromones.PushBack(pheromone)
+  }
 }
