@@ -10,7 +10,7 @@ import (
 const (
   SIZE_X = 1280
   SIZE_Y = 960
-  ANTS = 100
+  ANTS = 200
 )
 func main() {
   rand.Seed( time.Now().UTC().UnixNano())

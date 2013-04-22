@@ -7,10 +7,10 @@ import(
 
 const (
   MAX_AMOUNT = 100
-  UNIT_AMOUNT = 10
+  UNIT_AMOUNT = 20
 
-  EVAPORATION_TIME = 5000 * time.Millisecond
-  EVAPORATION_DELAY = 100 * time.Millisecond
+  EVAPORATION_TIME = 10000 * time.Millisecond
+  EVAPORATION_DELAY = 200 * time.Millisecond
   EVAPORATION_AMOUNT = int((MAX_AMOUNT * EVAPORATION_DELAY) / EVAPORATION_TIME)
 )
 

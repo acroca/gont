@@ -31,7 +31,7 @@ func NewAnt(w *World, p *Point) *Ant {
 
 func GenerateAnts(w *World){
   for ; ; {
-    time.Sleep(50 * time.Millisecond)
+    time.Sleep(10 * time.Millisecond)
     if w.Ants.Len() < w.MaxAnts {
       hole := w.Holes.Front().Value.(*Hole)
       ant := NewAnt(w, hole.Point)
@@ -95,34 +95,36 @@ func (a *Ant) Reorientate() {
     }
   }
 
-  for e:= a.World.Pheromones.Front(); e != nil ; e = e.Next() {
-    pheromone := e.Value.(*Pheromone)
-    distance := Distance(pheromone.Point, a.Vector.Point)
-    if distance <= VISIBLE_RANGE {
-      pheromoneVector := VectorFromPoints(a.Vector.Point, pheromone.Point)
+  var pd *PheromoneDistance
+  pheromones := make(chan *PheromoneDistance, 10)
+  go a.World.PheromonesWithin(a.Vector.Point, VISIBLE_RANGE, pheromones)
 
-      angle := math.Abs(a.Vector.Angle - pheromoneVector.Angle)
-      if angle < math.Pi / 2 {
-        pheromoneVector.Distance *= 1 - ((1/math.Pi) * angle)
+  for pd = <-pheromones ; pd != nil; pd = <-pheromones {
+    pheromone := pd.Pheromone
+    pheromoneVector := VectorFromPoints(a.Vector.Point, pheromone.Point)
 
-        pheromoneVector.Distance *= float64(pheromone.Amount) / 100.0
+    angle := math.Abs(a.Vector.Angle - pheromoneVector.Angle)
+    if angle < math.Pi / 2 {
+      pheromoneVector.Distance *= 1 - ((1/math.Pi) * angle)
 
-        random := (rand.NormFloat64() * 0.1) + 1
-        if random < 0 {
-          random = 0
-        } else if random > 1 {
-          random = 1
-        }
-        pheromoneVector.Distance *= random
+      pheromoneVector.Distance *= float64(pheromone.Amount) / 100.0
 
-        if pheromonesVector == nil {
-          pheromonesVector = pheromoneVector
-        } else {
-          pheromoneVector = pheromoneVector.Sum(pheromoneVector)
-        }
+      random := (rand.NormFloat64() * 0.1) + 1
+      if random < 0 {
+        random = 0
+      } else if random > 1 {
+        random = 1
+      }
+      pheromoneVector.Distance *= random
+
+      if pheromonesVector == nil {
+        pheromonesVector = pheromoneVector
+      } else {
+        pheromoneVector = pheromoneVector.Sum(pheromoneVector)
       }
     }
   }
+
   if pheromonesVector != nil {
     if a.HasFood {
       pheromonesVector.Distance *= 100
@@ -139,15 +141,17 @@ func (a *Ant) Reorientate() {
 }
 
 func (a *Ant) DropPheromone() {
+  mul := 1
+  if a.HasFood { mul = 2}
   pheromone := a.World.ClosestPheromoneWithin(a.Vector.Point, 5)
   if pheromone != nil {
-    pheromone.Amount += UNIT_AMOUNT
+    pheromone.Amount += UNIT_AMOUNT * mul
     if pheromone.Amount > MAX_AMOUNT {
       pheromone.Amount = MAX_AMOUNT
     }
   } else {
     pheromone = NewPheromone( &Point {X: a.Vector.Point.X, Y: a.Vector.Point.Y, })
-    pheromone.Amount *= 0.3
+    pheromone.Amount *= mul
     a.World.Pheromones.PushBack(pheromone)
   }
 }
