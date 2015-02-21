@@ -2,9 +2,12 @@ package ui
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"image"
+	"image/png"
 	"io/ioutil"
-	"math/rand"
+	"os"
 	"runtime"
 	"time"
 	"unsafe"
@@ -18,13 +21,12 @@ import (
 const (
 	title   = "Gont!"
 	width   = 800
-	height  = 600
+	height  = 800
 	kindAnt = 0
 )
 
 type p struct {
 	position  [2]float32
-	color     [3]float32
 	direction float32
 	kind      int32
 }
@@ -94,10 +96,6 @@ func (w *Window) Open() error {
 	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(pVar), unsafe.Offsetof(pVar.position))
 	positionAttrib.EnableArray()
 	defer positionAttrib.DisableArray()
-	colorAttrib := program.GetAttribLocation("color")
-	colorAttrib.AttribPointer(3, gl.FLOAT, false, binary.Size(pVar), unsafe.Offsetof(pVar.color))
-	colorAttrib.EnableArray()
-	defer colorAttrib.DisableArray()
 	kindAttrib := program.GetAttribLocation("kind")
 	kindAttrib.AttribPointer(1, gl.INT, false, binary.Size(pVar), unsafe.Offsetof(pVar.kind))
 	kindAttrib.EnableArray()
@@ -108,6 +106,14 @@ func (w *Window) Open() error {
 	defer directionAttrib.DisableArray()
 	gl.ClearColor(0, 0, 0, 1.0)
 	// gl.PointSize(10)
+
+	_, err = createTexture("./ui/ant.png")
+	if err != nil {
+		panic(err)
+	}
+	texSampler := program.GetUniformLocation("tex")
+	gl.ActiveTexture(gl.TEXTURE0)
+	texSampler.Uniform1i(0)
 
 	frames := 0
 	go func() {
@@ -145,9 +151,6 @@ func buildPoints(ants []*sim.Ant) []p {
 		res[idx].position[0] = float32(ant.Position.X)
 		res[idx].position[1] = float32(ant.Position.Y)
 		res[idx].direction = float32(ant.Direction.Angle)
-		res[idx].color[0] = rand.Float32()
-		res[idx].color[1] = rand.Float32()
-		res[idx].color[2] = rand.Float32()
 		res[idx].kind = kindAnt
 	}
 	return res
@@ -167,4 +170,38 @@ func loadDataFile(filePath string) string {
 		panic(err)
 	}
 	return string(content)
+}
+
+func createTexture(path string) (gl.Texture, error) {
+	r, err := os.Open(path)
+	if err != nil {
+		return gl.Texture(0), err
+	}
+	defer r.Close()
+
+	img, err := png.Decode(r)
+	if err != nil {
+		return gl.Texture(0), err
+	}
+
+	rgbaImg, ok := img.(*image.NRGBA)
+	if !ok {
+		return gl.Texture(0), errors.New("texture must be an NRGBA image")
+	}
+
+	texture := gl.GenTexture()
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
+
+	// generate base level storage
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+		rgbaImg.Bounds().Dx(), rgbaImg.Bounds().Dy(),
+		0, gl.RGBA, gl.UNSIGNED_BYTE, rgbaImg.Pix)
+	// generate required number of mipmaps given texture dimensions
+	gl.GenerateMipmap(gl.TEXTURE_2D)
+
+	return texture, nil
 }
