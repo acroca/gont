@@ -12,6 +12,7 @@ import (
 var (
 	antProgram gl.Program
 	antVao     gl.VertexArray
+	antVbo     gl.Buffer
 	antPoints  []point
 )
 
@@ -21,8 +22,9 @@ func initAntProgram(ants []*sim.Ant) {
 	antVao = gl.GenVertexArray()
 	antVao.Bind()
 
-	vbo := gl.GenBuffer()
-	vbo.Bind(gl.ARRAY_BUFFER)
+	antVbo = gl.GenBuffer()
+	antVbo.Bind(gl.ARRAY_BUFFER)
+	defer antVbo.Unbind(gl.ARRAY_BUFFER)
 	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(pVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
 
 	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/ant.v.glsl"))
@@ -69,12 +71,15 @@ func initAntProgram(ants []*sim.Ant) {
 
 func renderAnts(ants []*sim.Ant) {
 	antProgram.Use()
+	defer antProgram.Unuse()
 	antVao.Bind()
+	defer antVao.Unbind()
+	antVbo.Bind(gl.ARRAY_BUFFER)
+	defer antVbo.Unbind(gl.ARRAY_BUFFER)
+
 	updateAntPoints(ants)
 	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(pVar)*len(antPoints), antPoints)
 	gl.DrawArrays(gl.POINTS, 0, len(antPoints))
-	antVao.Unbind()
-	antProgram.Unuse()
 }
 
 func buildAntPoints(ants []*sim.Ant) []point {

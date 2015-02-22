@@ -17,7 +17,9 @@ const (
 	kindAnt = 0
 )
 
-var pVar point
+var (
+	pVar point
+)
 
 type point struct {
 	position  [2]float32
@@ -70,6 +72,7 @@ func (w *Window) Open() error {
 
 	w.window = window
 
+	initHoleProgram(w.world.Hole)
 	initAntProgram(w.world.Ants)
 
 	gl.ClearColor(0, 0, 0, 1.0)
@@ -90,6 +93,7 @@ func (w *Window) Open() error {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		renderAnts(w.world.Ants)
+		renderHole(w.world.Hole)
 
 		frames++
 		w.window.SwapBuffers()
