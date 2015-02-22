@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	world := sim.NewWorld(100)
+	world := sim.NewWorld(1000)
 	ui.NewWindow(world).Open()
 }
