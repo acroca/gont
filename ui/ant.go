@@ -13,7 +13,6 @@ var (
 	antProgram gl.Program
 	antVao     gl.VertexArray
 	antPoints  []point
-	pVar       point
 )
 
 func initAntProgram(ants []*sim.Ant) {

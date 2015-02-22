@@ -17,6 +17,8 @@ const (
 	kindAnt = 0
 )
 
+var pVar point
+
 type point struct {
 	position  [2]float32
 	direction float32
