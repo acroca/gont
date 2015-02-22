@@ -33,17 +33,21 @@ func NewAnt(position *util.Point) *Ant {
 func (ant *Ant) Move() {
 	ant.Position.X += math.Cos(ant.Direction.Angle) / 1000
 	if ant.Position.X > 1 {
-		ant.Position.X--
+		ant.Position.X = 2 - ant.Position.X
+		ant.Direction.MirrorY()
 	}
 	if ant.Position.X < 0 {
-		ant.Position.X++
+		ant.Position.X *= -1
+		ant.Direction.MirrorY()
 	}
 	ant.Position.Y += math.Sin(ant.Direction.Angle) / 1000
 	if ant.Position.Y > 1 {
-		ant.Position.Y--
+		ant.Position.Y = 2 - ant.Position.Y
+		ant.Direction.MirrorX()
 	}
 	if ant.Position.Y < 0 {
-		ant.Position.Y++
+		ant.Position.Y *= -1
+		ant.Direction.MirrorX()
 	}
 	ant.Direction.Angle += (rand.Float64() - 0.5) / 4
 }

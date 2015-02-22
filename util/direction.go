@@ -17,6 +17,16 @@ func (direction *Direction) Clone() *Direction {
 	}
 }
 
+// MirrorX clones a direction object
+func (direction *Direction) MirrorX() {
+	direction.Angle = (2 * math.Pi) - direction.Angle
+}
+
+// MirrorY clones a direction object
+func (direction *Direction) MirrorY() {
+	direction.Angle = math.Pi - direction.Angle
+}
+
 // RandomDirection returns a random direction
 func RandomDirection() *Direction {
 	return &Direction{
