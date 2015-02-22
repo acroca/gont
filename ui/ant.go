@@ -23,7 +23,7 @@ var (
 )
 
 func initAntProgram(ants []*sim.Ant) {
-	antPoints = buildAntPoints(ants)
+	buildAntPoints(ants)
 
 	antVao = gl.GenVertexArray()
 	antVao.Bind()
@@ -84,20 +84,14 @@ func renderAnts(ants []*sim.Ant) {
 	gl.DrawArrays(gl.POINTS, 0, len(antPoints))
 }
 
-func buildAntPoints(ants []*sim.Ant) []antPoint {
-	res := make([]antPoint, len(ants))
-	for idx, ant := range ants {
-		res[idx].position[0] = float32(ant.Position.X)
-		res[idx].position[1] = float32(ant.Position.Y)
-		res[idx].direction = float32(ant.Direction.Angle)
-	}
-	return res
+func buildAntPoints(ants []*sim.Ant) {
+	antPoints = make([]antPoint, len(ants))
+	updateAntPoints(ants)
 }
 
 func updateAntPoints(ants []*sim.Ant) {
 	for idx := range antPoints {
-		antPoints[idx].position[0] = float32((2 * ants[idx].Position.X) - 1)
-		antPoints[idx].position[1] = float32((2 * ants[idx].Position.Y) - 1)
+		pointToScreen(ants[idx].Position, &antPoints[idx].position)
 		antPoints[idx].direction = float32(ants[idx].Direction.Angle)
 	}
 }

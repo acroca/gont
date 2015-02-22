@@ -17,7 +17,7 @@ func NewWorld(maxAnts int) *World {
 		Hole: NewHole(&util.Point{0.8, 0.8}),
 	}
 	for i := 0; i < maxAnts; i++ {
-		world.Ants[i] = NewAnt(util.RandomPoint())
+		world.Ants[i] = NewAnt(world.Hole.Position.Clone())
 	}
 	return world
 }

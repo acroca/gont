@@ -22,7 +22,7 @@ type foodPoint struct {
 }
 
 func initFoodProgram(food *sim.Food) {
-	foodPoints = buildFoodPoints(food)
+	buildFoodPoints(food)
 
 	foodVao = gl.GenVertexArray()
 	foodVao.Bind()
@@ -67,9 +67,7 @@ func renderFood() {
 	gl.DrawArrays(gl.POINTS, 0, len(foodPoints))
 }
 
-func buildFoodPoints(food *sim.Food) []foodPoint {
-	res := make([]foodPoint, 1)
-	res[0].position[0] = float32(food.Position.X)
-	res[0].position[1] = float32(food.Position.Y)
-	return res
+func buildFoodPoints(food *sim.Food) {
+	foodPoints = make([]foodPoint, 1)
+	pointToScreen(food.Position, &foodPoints[0].position)
 }

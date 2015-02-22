@@ -22,7 +22,7 @@ type holePoint struct {
 }
 
 func initHoleProgram(hole *sim.Hole) {
-	holePoints = buildHolePoints(hole)
+	buildHolePoints(hole)
 
 	holeVao = gl.GenVertexArray()
 	holeVao.Bind()
@@ -67,9 +67,7 @@ func renderHole() {
 	gl.DrawArrays(gl.POINTS, 0, len(holePoints))
 }
 
-func buildHolePoints(hole *sim.Hole) []holePoint {
-	res := make([]holePoint, 1)
-	res[0].position[0] = float32(hole.Position.X)
-	res[0].position[1] = float32(hole.Position.Y)
-	return res
+func buildHolePoints(hole *sim.Hole) {
+	holePoints = make([]holePoint, 1)
+	pointToScreen(hole.Position, &holePoints[0].position)
 }

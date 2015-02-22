@@ -4,6 +4,7 @@ import (
 	"image"
 	"io/ioutil"
 
+	"github.com/acroca/gont/util"
 	"github.com/go-gl/gl"
 )
 
@@ -31,4 +32,9 @@ func createTexture(rgbaImg *image.NRGBA) (gl.Texture, error) {
 	gl.GenerateMipmap(gl.TEXTURE_2D)
 
 	return texture, nil
+}
+
+func pointToScreen(point *util.Point, out *[2]float32) {
+	out[0] = float32((2 * point.X) - 1)
+	out[1] = float32((2 * point.Y) - 1)
 }
