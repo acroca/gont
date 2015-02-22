@@ -15,11 +15,11 @@ type antPoint struct {
 }
 
 var (
-	antProgram gl.Program
-	antVao     gl.VertexArray
-	antVbo     gl.Buffer
-	antPoints  []antPoint
-	antPointVar       antPoint
+	antProgram  gl.Program
+	antVao      gl.VertexArray
+	antVbo      gl.Buffer
+	antPoints   []antPoint
+	antPointVar antPoint
 )
 
 func initAntProgram(ants []*sim.Ant) {
@@ -33,11 +33,11 @@ func initAntProgram(ants []*sim.Ant) {
 	defer antVbo.Unbind(gl.ARRAY_BUFFER)
 	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(antPointVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/ant.v.glsl"))
+	vShader := glh.MakeShader(gl.VERTEX_SHADER, antV)
 	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, loadDataFile("./ui/ant.g.glsl"))
+	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, antG)
 	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, loadDataFile("./ui/ant.f.glsl"))
+	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, antF)
 	defer fShader.Delete()
 
 	antProgram = gl.CreateProgram()
@@ -59,7 +59,7 @@ func initAntProgram(ants []*sim.Ant) {
 	directionAttrib.EnableArray()
 	defer directionAttrib.DisableArray()
 
-	tex, err := createTexture("./ui/ant.png")
+	tex, err := createTexture(antTex)
 	if err != nil {
 		panic(err)
 	}

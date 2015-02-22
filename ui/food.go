@@ -32,11 +32,11 @@ func initFoodProgram(food *sim.Food) {
 	defer foodVbo.Unbind(gl.ARRAY_BUFFER)
 	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(foodPointVar)*len(foodPoints), foodPoints, gl.STATIC_DRAW)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/food.v.glsl"))
+	vShader := glh.MakeShader(gl.VERTEX_SHADER, foodV)
 	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, loadDataFile("./ui/food.g.glsl"))
+	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, foodG)
 	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, loadDataFile("./ui/food.f.glsl"))
+	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, foodF)
 	defer fShader.Delete()
 
 	foodProgram = gl.CreateProgram()

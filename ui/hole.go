@@ -32,11 +32,11 @@ func initHoleProgram(hole *sim.Hole) {
 	defer holeVbo.Unbind(gl.ARRAY_BUFFER)
 	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(holePointVar)*len(holePoints), holePoints, gl.STATIC_DRAW)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/hole.v.glsl"))
+	vShader := glh.MakeShader(gl.VERTEX_SHADER, holeV)
 	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, loadDataFile("./ui/hole.g.glsl"))
+	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, holeG)
 	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, loadDataFile("./ui/hole.f.glsl"))
+	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, holeF)
 	defer fShader.Delete()
 
 	holeProgram = gl.CreateProgram()
