@@ -11,21 +11,10 @@ import (
 )
 
 const (
-	title   = "Gont!"
-	width   = 800
-	height  = 800
-	kindAnt = 0
+	title  = "Gont!"
+	width  = 800
+	height = 800
 )
-
-var (
-	pVar point
-)
-
-type point struct {
-	position  [2]float32
-	direction float32
-	kind      int32
-}
 
 // Window represents the simulator window
 type Window struct {
@@ -73,6 +62,7 @@ func (w *Window) Open() error {
 	w.window = window
 
 	initHoleProgram(w.world.Hole)
+	initFoodProgram(w.world.Food)
 	initAntProgram(w.world.Ants)
 
 	gl.ClearColor(0, 0, 0, 1.0)
@@ -93,7 +83,8 @@ func (w *Window) Open() error {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		renderAnts(w.world.Ants)
-		renderHole(w.world.Hole)
+		renderHole()
+		renderFood()
 
 		frames++
 		w.window.SwapBuffers()

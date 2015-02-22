@@ -9,11 +9,17 @@ import (
 	"github.com/go-gl/glh"
 )
 
+type antPoint struct {
+	position  [2]float32
+	direction float32
+}
+
 var (
 	antProgram gl.Program
 	antVao     gl.VertexArray
 	antVbo     gl.Buffer
-	antPoints  []point
+	antPoints  []antPoint
+	antPointVar       antPoint
 )
 
 func initAntProgram(ants []*sim.Ant) {
@@ -25,7 +31,7 @@ func initAntProgram(ants []*sim.Ant) {
 	antVbo = gl.GenBuffer()
 	antVbo.Bind(gl.ARRAY_BUFFER)
 	defer antVbo.Unbind(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(pVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(antPointVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
 
 	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/ant.v.glsl"))
 	defer vShader.Delete()
@@ -45,15 +51,11 @@ func initAntProgram(ants []*sim.Ant) {
 	defer antProgram.Unuse()
 
 	positionAttrib := antProgram.GetAttribLocation("position")
-	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(pVar), unsafe.Offsetof(pVar.position))
+	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(antPointVar), unsafe.Offsetof(antPointVar.position))
 	positionAttrib.EnableArray()
 	defer positionAttrib.DisableArray()
-	kindAttrib := antProgram.GetAttribLocation("kind")
-	kindAttrib.AttribPointer(1, gl.INT, false, binary.Size(pVar), unsafe.Offsetof(pVar.kind))
-	kindAttrib.EnableArray()
-	defer kindAttrib.DisableArray()
 	directionAttrib := antProgram.GetAttribLocation("direction")
-	directionAttrib.AttribPointer(1, gl.FLOAT, false, binary.Size(pVar), unsafe.Offsetof(pVar.direction))
+	directionAttrib.AttribPointer(1, gl.FLOAT, false, binary.Size(antPointVar), unsafe.Offsetof(antPointVar.direction))
 	directionAttrib.EnableArray()
 	defer directionAttrib.DisableArray()
 
@@ -78,17 +80,16 @@ func renderAnts(ants []*sim.Ant) {
 	defer antVbo.Unbind(gl.ARRAY_BUFFER)
 
 	updateAntPoints(ants)
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(pVar)*len(antPoints), antPoints)
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(antPointVar)*len(antPoints), antPoints)
 	gl.DrawArrays(gl.POINTS, 0, len(antPoints))
 }
 
-func buildAntPoints(ants []*sim.Ant) []point {
-	res := make([]point, len(ants))
+func buildAntPoints(ants []*sim.Ant) []antPoint {
+	res := make([]antPoint, len(ants))
 	for idx, ant := range ants {
 		res[idx].position[0] = float32(ant.Position.X)
 		res[idx].position[1] = float32(ant.Position.Y)
 		res[idx].direction = float32(ant.Direction.Angle)
-		res[idx].kind = kindAnt
 	}
 	return res
 }

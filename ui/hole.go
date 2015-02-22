@@ -2,7 +2,6 @@ package ui
 
 import (
 	"encoding/binary"
-	"fmt"
 	"unsafe"
 
 	"github.com/acroca/gont/sim"
@@ -11,11 +10,16 @@ import (
 )
 
 var (
-	holeProgram gl.Program
-	holeVao     gl.VertexArray
-	holeVbo     gl.Buffer
-	holePoints  []point
+	holeProgram  gl.Program
+	holeVao      gl.VertexArray
+	holeVbo      gl.Buffer
+	holePoints   []holePoint
+	holePointVar holePoint
 )
+
+type holePoint struct {
+	position [2]float32
+}
 
 func initHoleProgram(hole *sim.Hole) {
 	holePoints = buildHolePoints(hole)
@@ -26,10 +30,9 @@ func initHoleProgram(hole *sim.Hole) {
 	holeVbo = gl.GenBuffer()
 	holeVbo.Bind(gl.ARRAY_BUFFER)
 	defer holeVbo.Unbind(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(pVar)*len(holePoints), holePoints, gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(holePointVar)*len(holePoints), holePoints, gl.STATIC_DRAW)
 
 	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/hole.v.glsl"))
-	fmt.Println("a")
 	defer vShader.Delete()
 	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, loadDataFile("./ui/hole.g.glsl"))
 	defer gShader.Delete()
@@ -47,13 +50,13 @@ func initHoleProgram(hole *sim.Hole) {
 	defer holeProgram.Unuse()
 
 	positionAttrib := holeProgram.GetAttribLocation("position")
-	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(pVar), unsafe.Offsetof(pVar.position))
+	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(holePointVar), unsafe.Offsetof(holePointVar.position))
 	positionAttrib.EnableArray()
 
 	holeVao.Unbind()
 }
 
-func renderHole(hole *sim.Hole) {
+func renderHole() {
 	holeProgram.Use()
 	defer holeProgram.Unuse()
 	holeVao.Bind()
@@ -64,8 +67,8 @@ func renderHole(hole *sim.Hole) {
 	gl.DrawArrays(gl.POINTS, 0, len(holePoints))
 }
 
-func buildHolePoints(hole *sim.Hole) []point {
-	res := make([]point, 1)
+func buildHolePoints(hole *sim.Hole) []holePoint {
+	res := make([]holePoint, 1)
 	res[0].position[0] = float32(hole.Position.X)
 	res[0].position[1] = float32(hole.Position.Y)
 	return res
