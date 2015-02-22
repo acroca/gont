@@ -26,11 +26,20 @@ func initAntProgram(ants []*sim.Ant) {
 	vbo.Bind(gl.ARRAY_BUFFER)
 	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(pVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
 
-	vShader := glh.Shader{Type: gl.VERTEX_SHADER, Program: loadDataFile("./ui/ant.v.glsl")}
-	gShader := glh.Shader{Type: gl.GEOMETRY_SHADER, Program: loadDataFile("./ui/ant.g.glsl")}
-	fShader := glh.Shader{Type: gl.FRAGMENT_SHADER, Program: loadDataFile("./ui/ant.f.glsl")}
+	vShader := glh.MakeShader(gl.VERTEX_SHADER, loadDataFile("./ui/ant.v.glsl"))
+	defer vShader.Delete()
+	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, loadDataFile("./ui/ant.g.glsl"))
+	defer gShader.Delete()
+	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, loadDataFile("./ui/ant.f.glsl"))
+	defer fShader.Delete()
 
-	antProgram = glh.NewProgram(vShader, gShader, fShader)
+	antProgram = gl.CreateProgram()
+	antProgram.AttachShader(vShader)
+	antProgram.AttachShader(gShader)
+	antProgram.AttachShader(fShader)
+	antProgram.Link()
+	antProgram.Validate()
+
 	antProgram.Use()
 	defer antProgram.Unuse()
 
