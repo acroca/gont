@@ -6,7 +6,7 @@ import (
 
 	"github.com/acroca/gont/sim"
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/go-gl/glfw/v3.0/glfw"
+	"github.com/go-gl/glfw/v3.1/glfw"
 )
 
 const (
@@ -30,16 +30,17 @@ func NewWindow(world *sim.World) *Window {
 
 // Open opens the window
 func (w *Window) Open() error {
-	if !glfw.Init() {
+	err := glfw.Init()
+	if err != nil {
 		panic("failed to initialize glfw")
 	}
 	defer glfw.Terminate()
 
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
-	glfw.WindowHint(glfw.OpenglForwardCompatible, glfw.True)
-	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
-	glfw.WindowHint(glfw.OpenglDebugContext, glfw.True)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLDebugContext, glfw.True)
 
 	window, err := glfw.CreateWindow(width, height, title, nil, nil)
 	if err != nil {
