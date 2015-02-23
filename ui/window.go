@@ -2,12 +2,11 @@ package ui
 
 import (
 	"fmt"
-	"runtime"
 	"time"
 
 	"github.com/acroca/gont/sim"
-	"github.com/go-gl/gl"
-	glfw "github.com/go-gl/glfw3"
+	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/glfw/v3.0/glfw"
 )
 
 const (
@@ -31,40 +30,37 @@ func NewWindow(world *sim.World) *Window {
 
 // Open opens the window
 func (w *Window) Open() error {
-	runtime.LockOSThread()
 	if !glfw.Init() {
-		panic("glfw init failed")
+		panic("failed to initialize glfw")
 	}
 	defer glfw.Terminate()
 
-	// use OpenGL 4.0 with deprecated functionality removed
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 3)
 	glfw.WindowHint(glfw.OpenglForwardCompatible, glfw.True)
 	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
+	glfw.WindowHint(glfw.OpenglDebugContext, glfw.True)
 
 	window, err := glfw.CreateWindow(width, height, title, nil, nil)
 	if err != nil {
 		panic(err)
 	}
+	w.window = window
+
 	defer window.Destroy()
 
 	window.MakeContextCurrent()
 
-	// use vsync
-	glfw.SwapInterval(1)
-
-	if gl.Init() != 0 {
-		panic("glew init failed")
+	if err := gl.Init(); err != nil {
+		fmt.Errorf("Glew init failed: %v", err)
 	}
-	gl.GetError() // ignore INVALID_ENUM that GLEW raises when using OpenGL 3.2+
-
-	w.window = window
 
 	initHoleProgram(w.world.Hole)
 	initFoodProgram(w.world.Food)
 	initAntProgram(w.world.Ants)
 
+	// use vsync
+	glfw.SwapInterval(1)
 	gl.ClearColor(0, 0, 0, 1.0)
 	// gl.PointSize(10)
 
@@ -77,7 +73,7 @@ func (w *Window) Open() error {
 		}
 	}()
 	width, height := window.GetFramebufferSize()
-	gl.Viewport(0, 0, width, height)
+	gl.Viewport(0, 0, int32(width), int32(height))
 
 	for !w.window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)

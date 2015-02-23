@@ -5,14 +5,13 @@ import (
 	"unsafe"
 
 	"github.com/acroca/gont/sim"
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glh"
+	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 var (
-	holeProgram  gl.Program
-	holeVao      gl.VertexArray
-	holeVbo      gl.Buffer
+	holeProgram  uint32
+	holeVao      uint32
+	holeVbo      uint32
 	holePoints   []holePoint
 	holePointVar holePoint
 )
@@ -24,47 +23,50 @@ type holePoint struct {
 func initHoleProgram(hole *sim.Hole) {
 	buildHolePoints(hole)
 
-	holeVao = gl.GenVertexArray()
-	holeVao.Bind()
+	gl.GenVertexArrays(1, &holeVao)
+	gl.BindVertexArray(holeVao)
 
-	holeVbo = gl.GenBuffer()
-	holeVbo.Bind(gl.ARRAY_BUFFER)
-	defer holeVbo.Unbind(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(holePointVar)*len(holePoints), holePoints, gl.STATIC_DRAW)
+	gl.GenBuffers(1, &holeVbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, holeVbo)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, holeV)
-	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, holeG)
-	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, holeF)
-	defer fShader.Delete()
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		binary.Size(holePointVar)*cap(holePoints),
+		gl.Ptr(holePoints),
+		gl.STATIC_DRAW)
+
+	vShader := makeShader(gl.VERTEX_SHADER, holeV)
+	defer gl.DeleteShader(vShader)
+	gShader := makeShader(gl.GEOMETRY_SHADER, holeG)
+	defer gl.DeleteShader(gShader)
+	fShader := makeShader(gl.FRAGMENT_SHADER, holeF)
+	defer gl.DeleteShader(fShader)
 
 	holeProgram = gl.CreateProgram()
-	holeProgram.AttachShader(vShader)
-	holeProgram.AttachShader(gShader)
-	holeProgram.AttachShader(fShader)
-	holeProgram.Link()
-	holeProgram.Validate()
+	gl.AttachShader(holeProgram, vShader)
+	gl.AttachShader(holeProgram, gShader)
+	gl.AttachShader(holeProgram, fShader)
+	gl.LinkProgram(holeProgram)
+	gl.ValidateProgram(holeProgram)
 
-	holeProgram.Use()
-	defer holeProgram.Unuse()
+	gl.UseProgram(holeProgram)
 
-	positionAttrib := holeProgram.GetAttribLocation("position")
-	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(holePointVar), unsafe.Offsetof(holePointVar.position))
-	positionAttrib.EnableArray()
-
-	holeVao.Unbind()
+	positionAttrib := uint32(gl.GetAttribLocation(holeProgram, gl.Str("position\x00")))
+	gl.EnableVertexAttribArray(positionAttrib)
+	gl.VertexAttribPointer(
+		positionAttrib,
+		2, gl.FLOAT,
+		false,
+		int32(binary.Size(holePointVar)),
+		gl.PtrOffset(int(unsafe.Offsetof(holePointVar.position))))
 }
 
 func renderHole() {
-	holeProgram.Use()
-	defer holeProgram.Unuse()
-	holeVao.Bind()
-	defer holeVao.Unbind()
-	holeVbo.Bind(gl.ARRAY_BUFFER)
-	defer holeVbo.Unbind(gl.ARRAY_BUFFER)
+	gl.UseProgram(holeProgram)
+	gl.BindVertexArray(holeVao)
+	gl.BindBuffer(holeVbo, gl.ARRAY_BUFFER)
 
-	gl.DrawArrays(gl.POINTS, 0, len(holePoints))
+	gl.DrawArrays(gl.POINTS, 0, int32(len(holePoints)))
 }
 
 func buildHolePoints(hole *sim.Hole) {

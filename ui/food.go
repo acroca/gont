@@ -5,14 +5,13 @@ import (
 	"unsafe"
 
 	"github.com/acroca/gont/sim"
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glh"
+	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 var (
-	foodProgram  gl.Program
-	foodVao      gl.VertexArray
-	foodVbo      gl.Buffer
+	foodProgram  uint32
+	foodVao      uint32
+	foodVbo      uint32
 	foodPoints   []foodPoint
 	foodPointVar foodPoint
 )
@@ -24,47 +23,51 @@ type foodPoint struct {
 func initFoodProgram(food *sim.Food) {
 	buildFoodPoints(food)
 
-	foodVao = gl.GenVertexArray()
-	foodVao.Bind()
+	gl.GenVertexArrays(1, &foodVao)
+	gl.BindVertexArray(foodVao)
 
-	foodVbo = gl.GenBuffer()
-	foodVbo.Bind(gl.ARRAY_BUFFER)
-	defer foodVbo.Unbind(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(foodPointVar)*len(foodPoints), foodPoints, gl.STATIC_DRAW)
+	gl.GenBuffers(1, &foodVbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, foodVbo)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, foodV)
-	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, foodG)
-	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, foodF)
-	defer fShader.Delete()
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		binary.Size(foodPointVar)*cap(foodPoints),
+		gl.Ptr(foodPoints),
+		gl.STATIC_DRAW)
+
+	vShader := makeShader(gl.VERTEX_SHADER, foodV)
+	defer gl.DeleteShader(vShader)
+	gShader := makeShader(gl.GEOMETRY_SHADER, foodG)
+	defer gl.DeleteShader(gShader)
+	fShader := makeShader(gl.FRAGMENT_SHADER, foodF)
+	defer gl.DeleteShader(fShader)
 
 	foodProgram = gl.CreateProgram()
-	foodProgram.AttachShader(vShader)
-	foodProgram.AttachShader(gShader)
-	foodProgram.AttachShader(fShader)
-	foodProgram.Link()
-	foodProgram.Validate()
+	gl.AttachShader(foodProgram, vShader)
+	gl.AttachShader(foodProgram, gShader)
+	gl.AttachShader(foodProgram, fShader)
+	gl.LinkProgram(foodProgram)
+	gl.ValidateProgram(foodProgram)
 
-	foodProgram.Use()
-	defer foodProgram.Unuse()
+	gl.UseProgram(foodProgram)
 
-	positionAttrib := foodProgram.GetAttribLocation("position")
-	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(foodPointVar), unsafe.Offsetof(foodPointVar.position))
-	positionAttrib.EnableArray()
+	positionAttrib := uint32(gl.GetAttribLocation(foodProgram, gl.Str("position\x00")))
+	gl.EnableVertexAttribArray(positionAttrib)
+	gl.VertexAttribPointer(
+		positionAttrib,
+		2, gl.FLOAT,
+		false,
+		int32(binary.Size(foodPointVar)),
+		gl.PtrOffset(int(unsafe.Offsetof(foodPointVar.position))))
 
-	foodVao.Unbind()
 }
 
 func renderFood() {
-	foodProgram.Use()
-	defer foodProgram.Unuse()
-	foodVao.Bind()
-	defer foodVao.Unbind()
-	foodVbo.Bind(gl.ARRAY_BUFFER)
-	defer foodVbo.Unbind(gl.ARRAY_BUFFER)
+	gl.UseProgram(foodProgram)
+	gl.BindVertexArray(foodVao)
+	gl.BindBuffer(foodVbo, gl.ARRAY_BUFFER)
 
-	gl.DrawArrays(gl.POINTS, 0, len(foodPoints))
+	gl.DrawArrays(gl.POINTS, 0, int32(len(foodPoints)))
 }
 
 func buildFoodPoints(food *sim.Food) {

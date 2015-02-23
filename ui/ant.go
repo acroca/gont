@@ -5,8 +5,15 @@ import (
 	"unsafe"
 
 	"github.com/acroca/gont/sim"
-	"github.com/go-gl/gl"
-	"github.com/go-gl/glh"
+	"github.com/go-gl/gl/v3.3-core/gl"
+)
+
+var (
+	antProgram  uint32
+	antVao      uint32
+	antVbo      uint32
+	antPoints   []antPoint
+	antPointVar antPoint
 )
 
 type antPoint struct {
@@ -14,74 +21,77 @@ type antPoint struct {
 	direction float32
 }
 
-var (
-	antProgram  gl.Program
-	antVao      gl.VertexArray
-	antVbo      gl.Buffer
-	antPoints   []antPoint
-	antPointVar antPoint
-)
-
 func initAntProgram(ants []*sim.Ant) {
 	buildAntPoints(ants)
 
-	antVao = gl.GenVertexArray()
-	antVao.Bind()
+	gl.GenVertexArrays(1, &antVao)
+	gl.BindVertexArray(antVao)
 
-	antVbo = gl.GenBuffer()
-	antVbo.Bind(gl.ARRAY_BUFFER)
-	defer antVbo.Unbind(gl.ARRAY_BUFFER)
-	gl.BufferData(gl.ARRAY_BUFFER, binary.Size(antPointVar)*cap(antPoints), antPoints, gl.STREAM_DRAW)
+	gl.GenBuffers(1, &antVbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, antVbo)
 
-	vShader := glh.MakeShader(gl.VERTEX_SHADER, antV)
-	defer vShader.Delete()
-	gShader := glh.MakeShader(gl.GEOMETRY_SHADER, antG)
-	defer gShader.Delete()
-	fShader := glh.MakeShader(gl.FRAGMENT_SHADER, antF)
-	defer fShader.Delete()
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		binary.Size(antPointVar)*cap(antPoints),
+		nil,
+		gl.STREAM_DRAW)
+
+	vShader := makeShader(gl.VERTEX_SHADER, antV)
+	defer gl.DeleteShader(vShader)
+	gShader := makeShader(gl.GEOMETRY_SHADER, antG)
+	defer gl.DeleteShader(gShader)
+	fShader := makeShader(gl.FRAGMENT_SHADER, antF)
+	defer gl.DeleteShader(fShader)
 
 	antProgram = gl.CreateProgram()
-	antProgram.AttachShader(vShader)
-	antProgram.AttachShader(gShader)
-	antProgram.AttachShader(fShader)
-	antProgram.Link()
-	antProgram.Validate()
+	gl.AttachShader(antProgram, vShader)
+	gl.AttachShader(antProgram, gShader)
+	gl.AttachShader(antProgram, fShader)
+	gl.LinkProgram(antProgram)
+	gl.ValidateProgram(antProgram)
 
-	antProgram.Use()
-	defer antProgram.Unuse()
+	gl.UseProgram(antProgram)
 
-	positionAttrib := antProgram.GetAttribLocation("position")
-	positionAttrib.AttribPointer(2, gl.FLOAT, false, binary.Size(antPointVar), unsafe.Offsetof(antPointVar.position))
-	positionAttrib.EnableArray()
-	defer positionAttrib.DisableArray()
-	directionAttrib := antProgram.GetAttribLocation("direction")
-	directionAttrib.AttribPointer(1, gl.FLOAT, false, binary.Size(antPointVar), unsafe.Offsetof(antPointVar.direction))
-	directionAttrib.EnableArray()
-	defer directionAttrib.DisableArray()
+	positionAttrib := uint32(gl.GetAttribLocation(antProgram, gl.Str("position\x00")))
+	gl.EnableVertexAttribArray(positionAttrib)
+	gl.VertexAttribPointer(
+		positionAttrib,
+		2, gl.FLOAT,
+		false,
+		int32(binary.Size(antPointVar)),
+		gl.PtrOffset(int(unsafe.Offsetof(antPointVar.position))))
+
+	directionAttrib := uint32(gl.GetAttribLocation(antProgram, gl.Str("direction\x00")))
+	gl.EnableVertexAttribArray(directionAttrib)
+	gl.VertexAttribPointer(
+		directionAttrib,
+		1, gl.FLOAT,
+		false,
+		int32(binary.Size(antPointVar)),
+		gl.PtrOffset(int(unsafe.Offsetof(antPointVar.direction))))
+	// defer gl.DisableVertexAttribArray(directionAttrib)
 
 	tex, err := createTexture(antTex)
 	if err != nil {
 		panic(err)
 	}
-	defer tex.Delete()
-	texSampler := antProgram.GetUniformLocation("tex")
-	gl.ActiveTexture(gl.TEXTURE0)
-	texSampler.Uniform1i(0)
+	defer gl.DeleteTextures(1, &tex)
 
-	antVao.Unbind()
+	texSampler := gl.GetUniformLocation(antProgram, gl.Str("tex\x00"))
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.Uniform1i(texSampler, 0)
+
 }
 
 func renderAnts(ants []*sim.Ant) {
-	antProgram.Use()
-	defer antProgram.Unuse()
-	antVao.Bind()
-	defer antVao.Unbind()
-	antVbo.Bind(gl.ARRAY_BUFFER)
-	defer antVbo.Unbind(gl.ARRAY_BUFFER)
+	gl.UseProgram(antProgram)
+	gl.BindVertexArray(antVao)
+	gl.BindBuffer(antVbo, gl.ARRAY_BUFFER)
 
 	updateAntPoints(ants)
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(antPointVar)*len(antPoints), antPoints)
-	gl.DrawArrays(gl.POINTS, 0, len(antPoints))
+
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(antPointVar)*len(antPoints), gl.Ptr(antPoints))
+	gl.DrawArrays(gl.POINTS, 0, int32(len(antPoints)))
 }
 
 func buildAntPoints(ants []*sim.Ant) {
