@@ -7,5 +7,7 @@ import (
 
 func main() {
 	world := sim.NewWorld(1)
-	ui.NewWindow(world).Open()
+	window := ui.NewWindow(world)
+	go world.Start()
+	window.Open()
 }
