@@ -8,15 +8,12 @@ import (
 	"github.com/acroca/gont/util"
 )
 
-const (
-	antMovementPerSecond    = 0.05
-	antMaxRotationPerSecond = 3
-)
-
 // Ant represents an ant
 type Ant struct {
 	Position  *util.Point
 	Direction *util.Direction
+
+	timeSinceLastPheromone time.Duration
 }
 
 // NewAnt builds and returns a new ant
@@ -49,4 +46,14 @@ func (ant *Ant) Move(d time.Duration) {
 		ant.Direction.MirrorX()
 	}
 	ant.Direction.Angle += ((2 * rand.Float64()) - 1) * d.Seconds() * antMaxRotationPerSecond
+}
+
+// DropPheromone implements a pheromone if the ant drops it
+func (ant *Ant) DropPheromone(d time.Duration) *Pheromone {
+	ant.timeSinceLastPheromone += d
+	if ant.timeSinceLastPheromone > antPheromoneFrequency {
+		ant.timeSinceLastPheromone -= antPheromoneFrequency
+		return NewPheromone(ant.Position.Clone())
+	}
+	return nil
 }

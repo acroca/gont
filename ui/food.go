@@ -60,12 +60,13 @@ func initFoodProgram(food *sim.Food) {
 		int32(binary.Size(foodPointVar)),
 		gl.PtrOffset(int(unsafe.Offsetof(foodPointVar.position))))
 
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func renderFood() {
 	gl.UseProgram(foodProgram)
 	gl.BindVertexArray(foodVao)
-	gl.BindBuffer(foodVbo, gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, foodVbo)
 
 	gl.DrawArrays(gl.POINTS, 0, int32(len(foodPoints)))
 }

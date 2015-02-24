@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"fmt"
 	"image"
 	"io/ioutil"
+	"strings"
 
 	"github.com/acroca/gont/util"
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -45,5 +47,17 @@ func makeShader(shaderType uint32, source string) uint32 {
 	cSource := gl.Str(source + "\x00")
 	gl.ShaderSource(shader, 1, &cSource, nil)
 	gl.CompileShader(shader)
+
+	var status int32
+	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &logLength)
+
+		log := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(log))
+
+		panic(fmt.Sprintf("failed to compile %v: %v", source, log))
+	}
 	return shader
 }

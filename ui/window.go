@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/acroca/gont/sim"
@@ -56,6 +57,7 @@ func (w *Window) Open() error {
 		fmt.Errorf("Glew init failed: %v", err)
 	}
 
+	initPheromoneProgram(w.world.Pheromones, w.world.MaxPheromones)
 	initHoleProgram(w.world.Hole)
 	initFoodProgram(w.world.Food)
 	initAntProgram(w.world.Ants)
@@ -67,8 +69,10 @@ func (w *Window) Open() error {
 
 	frames := 0
 	go func() {
+		var m runtime.MemStats
 		for {
-			fmt.Printf("FPS: %d\n", frames)
+			runtime.ReadMemStats(&m)
+			fmt.Printf("FPS: %d\tMem: %d\n", frames, m.Alloc)
 			frames = 0
 			time.Sleep(1000 * time.Millisecond)
 		}
@@ -79,9 +83,10 @@ func (w *Window) Open() error {
 	for !w.window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		renderAnts(w.world.Ants)
+		renderPheromones(w.world.Pheromones, w.world.MaxPheromones)
 		renderHole()
 		renderFood()
+		renderAnts(w.world.Ants)
 
 		frames++
 		w.window.SwapBuffers()

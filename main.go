@@ -7,7 +7,9 @@ import (
 	"github.com/acroca/gont/ui"
 )
 
-var numAnts = flag.Int("ants", 1, "Number of ants in the simulator")
+var (
+	numAnts = flag.Int("ants", 10, "Number of ants in the simulator")
+)
 
 func main() {
 	flag.Parse()

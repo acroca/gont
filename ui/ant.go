@@ -81,12 +81,13 @@ func initAntProgram(ants []*sim.Ant) {
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.Uniform1i(texSampler, 0)
 
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func renderAnts(ants []*sim.Ant) {
 	gl.UseProgram(antProgram)
 	gl.BindVertexArray(antVao)
-	gl.BindBuffer(antVbo, gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, antVbo)
 
 	updateAntPoints(ants)
 

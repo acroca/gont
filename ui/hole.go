@@ -59,12 +59,14 @@ func initHoleProgram(hole *sim.Hole) {
 		false,
 		int32(binary.Size(holePointVar)),
 		gl.PtrOffset(int(unsafe.Offsetof(holePointVar.position))))
+
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
 
 func renderHole() {
 	gl.UseProgram(holeProgram)
 	gl.BindVertexArray(holeVao)
-	gl.BindBuffer(holeVbo, gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, holeVbo)
 
 	gl.DrawArrays(gl.POINTS, 0, int32(len(holePoints)))
 }
