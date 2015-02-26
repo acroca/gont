@@ -3,17 +3,18 @@ package sim
 import (
 	"time"
 
-	"github.com/acroca/gont/util"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // Pheromone represents a pheromone
 type Pheromone struct {
-	Intensity float32
-	Position  *util.Point
+	Intensity            float32
+	Position             mgl32.Vec2
+	PheromoneStorageItem *PheromoneStorageItem
 }
 
 // NewPheromone builds and returns a new pheromone
-func NewPheromone(position *util.Point) *Pheromone {
+func NewPheromone(position mgl32.Vec2) *Pheromone {
 	pheromone := &Pheromone{
 		Position:  position,
 		Intensity: 1.0,

@@ -7,7 +7,7 @@ import (
 
 // Direction implements a direction
 type Direction struct {
-	Angle float64
+	Angle float32
 }
 
 // Clone clones a direction object
@@ -30,6 +30,6 @@ func (direction *Direction) MirrorY() {
 // RandomDirection returns a random direction
 func RandomDirection() *Direction {
 	return &Direction{
-		Angle: rand.Float64() * 2 * math.Pi,
+		Angle: rand.Float32() * 2 * math.Pi,
 	}
 }

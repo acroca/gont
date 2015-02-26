@@ -2,10 +2,9 @@ package ui
 
 import (
 	"fmt"
-	"runtime"
-	"time"
 
 	"github.com/acroca/gont/sim"
+	"github.com/acroca/gont/util"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 )
@@ -57,38 +56,30 @@ func (w *Window) Open() error {
 		fmt.Errorf("Glew init failed: %v", err)
 	}
 
-	initPheromoneProgram(w.world.Pheromones, w.world.MaxPheromones)
-	initHoleProgram(w.world.Hole)
-	initFoodProgram(w.world.Food)
-	initAntProgram(w.world.Ants)
+	hole := NewHole(w.world)
+	food := NewFood(w.world)
+	pheromones := NewPheromones(w.world)
+	ants := NewAnts(w.world)
 
 	// use vsync
 	glfw.SwapInterval(1)
-	gl.ClearColor(0, 0, 0, 1.0)
+	gl.ClearColor(1, 1, 1, 1.0)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	// gl.PointSize(10)
-
-	frames := 0
-	go func() {
-		var m runtime.MemStats
-		for {
-			runtime.ReadMemStats(&m)
-			fmt.Printf("FPS: %d\tMem: %d\n", frames, m.Alloc)
-			frames = 0
-			time.Sleep(1000 * time.Millisecond)
-		}
-	}()
 	width, height := window.GetFramebufferSize()
 	gl.Viewport(0, 0, int32(width), int32(height))
 
 	for !w.window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		renderPheromones(w.world.Pheromones, w.world.MaxPheromones)
-		renderHole()
-		renderFood()
-		renderAnts(w.world.Ants)
+		pheromones.Render()
+		hole.Render()
+		food.Render()
+		ants.Render()
 
-		frames++
+		util.Stats.Frames++
+
 		w.window.SwapBuffers()
 		glfw.PollEvents()
 

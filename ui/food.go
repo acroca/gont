@@ -8,70 +8,45 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-var (
-	foodProgram  uint32
-	foodVao      uint32
-	foodVbo      uint32
-	foodPoints   []foodPoint
-	foodPointVar foodPoint
-)
-
 type foodPoint struct {
 	position [2]float32
 }
 
-func initFoodProgram(food *sim.Food) {
-	buildFoodPoints(food)
-
-	gl.GenVertexArrays(1, &foodVao)
-	gl.BindVertexArray(foodVao)
-
-	gl.GenBuffers(1, &foodVbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, foodVbo)
-
-	gl.BufferData(
-		gl.ARRAY_BUFFER,
-		binary.Size(foodPointVar)*cap(foodPoints),
-		gl.Ptr(foodPoints),
-		gl.STATIC_DRAW)
-
-	vShader := makeShader(gl.VERTEX_SHADER, foodV)
-	defer gl.DeleteShader(vShader)
-	gShader := makeShader(gl.GEOMETRY_SHADER, foodG)
-	defer gl.DeleteShader(gShader)
-	fShader := makeShader(gl.FRAGMENT_SHADER, foodF)
-	defer gl.DeleteShader(fShader)
-
-	foodProgram = gl.CreateProgram()
-	gl.AttachShader(foodProgram, vShader)
-	gl.AttachShader(foodProgram, gShader)
-	gl.AttachShader(foodProgram, fShader)
-	gl.LinkProgram(foodProgram)
-	gl.ValidateProgram(foodProgram)
-
-	gl.UseProgram(foodProgram)
-
-	positionAttrib := uint32(gl.GetAttribLocation(foodProgram, gl.Str("position\x00")))
-	gl.EnableVertexAttribArray(positionAttrib)
-	gl.VertexAttribPointer(
-		positionAttrib,
-		2, gl.FLOAT,
-		false,
-		int32(binary.Size(foodPointVar)),
-		gl.PtrOffset(int(unsafe.Offsetof(foodPointVar.position))))
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+// Food models a ui element for a food
+type Food struct {
+	World    *sim.World
+	Program  *Program
+	PointVar foodPoint
+	Points   []foodPoint
 }
 
-func renderFood() {
-	gl.UseProgram(foodProgram)
-	gl.BindVertexArray(foodVao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, foodVbo)
+// NewFood Initializes a UI food
+func NewFood(world *sim.World) *Food {
+	food := &Food{
+		World:  world,
+		Points: make([]foodPoint, 1),
+	}
+	pointToScreen(world.Food.Position, &(food.Points[0].position))
 
-	gl.DrawArrays(gl.POINTS, 0, int32(len(foodPoints)))
+	attributes := []*Attribute{
+		{
+			Type:          AttributeFloat,
+			AttributeName: "position",
+			Amount:        2,
+			Stride:        int32(binary.Size(food.PointVar)),
+			Offset:        int(unsafe.Offsetof(food.PointVar.position)),
+		},
+	}
+	food.Program = NewProgram(
+		binary.Size(food.PointVar)*len(food.Points),
+		gl.Ptr(food.Points),
+		foodShaders,
+		attributes)
+	return food
 }
 
-func buildFoodPoints(food *sim.Food) {
-	foodPoints = make([]foodPoint, 1)
-	pointToScreen(food.Position, &foodPoints[0].position)
+// Render renders the food
+func (food *Food) Render() {
+	food.Program.Use()
+	gl.DrawArrays(gl.POINTS, 0, int32(len(food.Points)))
 }

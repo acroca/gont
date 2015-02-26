@@ -8,70 +8,45 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-var (
-	holeProgram  uint32
-	holeVao      uint32
-	holeVbo      uint32
-	holePoints   []holePoint
-	holePointVar holePoint
-)
-
 type holePoint struct {
 	position [2]float32
 }
 
-func initHoleProgram(hole *sim.Hole) {
-	buildHolePoints(hole)
-
-	gl.GenVertexArrays(1, &holeVao)
-	gl.BindVertexArray(holeVao)
-
-	gl.GenBuffers(1, &holeVbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, holeVbo)
-
-	gl.BufferData(
-		gl.ARRAY_BUFFER,
-		binary.Size(holePointVar)*cap(holePoints),
-		gl.Ptr(holePoints),
-		gl.STATIC_DRAW)
-
-	vShader := makeShader(gl.VERTEX_SHADER, holeV)
-	defer gl.DeleteShader(vShader)
-	gShader := makeShader(gl.GEOMETRY_SHADER, holeG)
-	defer gl.DeleteShader(gShader)
-	fShader := makeShader(gl.FRAGMENT_SHADER, holeF)
-	defer gl.DeleteShader(fShader)
-
-	holeProgram = gl.CreateProgram()
-	gl.AttachShader(holeProgram, vShader)
-	gl.AttachShader(holeProgram, gShader)
-	gl.AttachShader(holeProgram, fShader)
-	gl.LinkProgram(holeProgram)
-	gl.ValidateProgram(holeProgram)
-
-	gl.UseProgram(holeProgram)
-
-	positionAttrib := uint32(gl.GetAttribLocation(holeProgram, gl.Str("position\x00")))
-	gl.EnableVertexAttribArray(positionAttrib)
-	gl.VertexAttribPointer(
-		positionAttrib,
-		2, gl.FLOAT,
-		false,
-		int32(binary.Size(holePointVar)),
-		gl.PtrOffset(int(unsafe.Offsetof(holePointVar.position))))
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+// Hole models a ui element for a hole
+type Hole struct {
+	World    *sim.World
+	Program  *Program
+	PointVar holePoint
+	Points   []holePoint
 }
 
-func renderHole() {
-	gl.UseProgram(holeProgram)
-	gl.BindVertexArray(holeVao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, holeVbo)
+// NewHole Initializes a UI hole
+func NewHole(world *sim.World) *Hole {
+	hole := &Hole{
+		World:  world,
+		Points: make([]holePoint, 1),
+	}
+	pointToScreen(world.Hole.Position, &(hole.Points[0].position))
 
-	gl.DrawArrays(gl.POINTS, 0, int32(len(holePoints)))
+	attributes := []*Attribute{
+		{
+			Type:          AttributeFloat,
+			AttributeName: "position",
+			Amount:        2,
+			Stride:        int32(binary.Size(hole.PointVar)),
+			Offset:        int(unsafe.Offsetof(hole.PointVar.position)),
+		},
+	}
+	hole.Program = NewProgram(
+		binary.Size(hole.PointVar)*len(hole.Points),
+		gl.Ptr(hole.Points),
+		holeShaders,
+		attributes)
+	return hole
 }
 
-func buildHolePoints(hole *sim.Hole) {
-	holePoints = make([]holePoint, 1)
-	pointToScreen(hole.Position, &holePoints[0].position)
+// Render renders the hole
+func (hole *Hole) Render() {
+	hole.Program.Use()
+	gl.DrawArrays(gl.POINTS, 0, int32(len(hole.Points)))
 }

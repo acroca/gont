@@ -3,8 +3,12 @@ package sim
 import "time"
 
 const (
-	antMovementPerSecond    = 0.05
-	antMaxRotationPerSecond = 3
-	antPheromoneFrequency   = 1000 * time.Millisecond
-	pheromoneDuration       = 25 * time.Second
+	simSpeed = 4
+
+	antMovementPerSecond    = 0.05 * simSpeed
+	antMaxRotationPerSecond = 3 * simSpeed
+	antPheromoneFrequency   = (500 / simSpeed) * time.Millisecond
+	pheromoneDuration       = (25000 / simSpeed) * time.Millisecond
+
+	pheromoneIndexParts = 100
 )

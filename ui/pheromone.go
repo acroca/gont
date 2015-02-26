@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"container/list"
 	"encoding/binary"
 	"unsafe"
 
@@ -9,100 +8,64 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-var (
-	pheromoneProgram  uint32
-	pheromoneVao      uint32
-	pheromoneVbo      uint32
-	pheromonePoints   []pheromonePoint
-	pheromonePointVar pheromonePoint
-)
-
 type pheromonePoint struct {
-	position  [2]float32
 	intensity float32
+	position  [2]float32
 }
 
-func initPheromoneProgram(pheromones *list.List, maxPheromones int) {
-	buildPheromonePoints(pheromones, maxPheromones)
-
-	gl.GenVertexArrays(1, &pheromoneVao)
-	gl.BindVertexArray(pheromoneVao)
-
-	gl.GenBuffers(1, &pheromoneVbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, pheromoneVbo)
-
-	gl.BufferData(
-		gl.ARRAY_BUFFER,
-		binary.Size(pheromonePointVar)*cap(pheromonePoints),
-		nil,
-		gl.DYNAMIC_DRAW)
-
-	vShader := makeShader(gl.VERTEX_SHADER, pheromoneV)
-	defer gl.DeleteShader(vShader)
-	gShader := makeShader(gl.GEOMETRY_SHADER, pheromoneG)
-	defer gl.DeleteShader(gShader)
-	fShader := makeShader(gl.FRAGMENT_SHADER, pheromoneF)
-	defer gl.DeleteShader(fShader)
-
-	pheromoneProgram = gl.CreateProgram()
-	gl.AttachShader(pheromoneProgram, vShader)
-	gl.AttachShader(pheromoneProgram, gShader)
-	gl.AttachShader(pheromoneProgram, fShader)
-	gl.LinkProgram(pheromoneProgram)
-	gl.ValidateProgram(pheromoneProgram)
-
-	gl.UseProgram(pheromoneProgram)
-
-	positionAttrib := uint32(gl.GetAttribLocation(pheromoneProgram, gl.Str("position\x00")))
-	gl.EnableVertexAttribArray(positionAttrib)
-	gl.VertexAttribPointer(
-		positionAttrib,
-		2, gl.FLOAT,
-		false,
-		int32(binary.Size(pheromonePointVar)),
-		gl.PtrOffset(int(unsafe.Offsetof(pheromonePointVar.position))))
-
-	intensityAttrib := uint32(gl.GetAttribLocation(pheromoneProgram, gl.Str("intensity\x00")))
-	gl.EnableVertexAttribArray(intensityAttrib)
-	gl.VertexAttribPointer(
-		intensityAttrib,
-		1, gl.FLOAT,
-		false,
-		int32(binary.Size(pheromonePointVar)),
-		gl.PtrOffset(int(unsafe.Offsetof(pheromonePointVar.intensity))))
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+// Pheromones models a ui element for a pheromone
+type Pheromones struct {
+	World    *sim.World
+	Program  *Program
+	PointVar pheromonePoint
+	Points   []pheromonePoint
 }
 
-func renderPheromones(pheromones *list.List, maxPheromones int) {
-	gl.UseProgram(pheromoneProgram)
-	gl.BindVertexArray(pheromoneVao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, pheromoneVbo)
+// NewPheromones Initializes a UI pheromone
+func NewPheromones(world *sim.World) *Pheromones {
+	pheromones := &Pheromones{
+		World:  world,
+		Points: make([]pheromonePoint, world.MaxPheromones),
+	}
 
-	updatePheromonePoints(pheromones, maxPheromones)
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(pheromonePointVar)*pheromones.Len(), gl.Ptr(pheromonePoints))
-	gl.DrawArrays(gl.POINTS, 0, int32(pheromones.Len()))
+	attributes := []*Attribute{
+		{
+			Type:          AttributeFloat,
+			AttributeName: "position",
+			Amount:        2,
+			Stride:        int32(binary.Size(pheromones.PointVar)),
+			Offset:        int(unsafe.Offsetof(pheromones.PointVar.position)),
+		},
+		{
+			Type:          AttributeFloat,
+			AttributeName: "intensity",
+			Amount:        1,
+			Stride:        int32(binary.Size(pheromones.PointVar)),
+			Offset:        int(unsafe.Offsetof(pheromones.PointVar.intensity)),
+		},
+	}
+	pheromones.Program = NewProgram(
+		binary.Size(pheromones.PointVar)*len(pheromones.Points),
+		gl.Ptr(pheromones.Points),
+		pheromoneShaders,
+		attributes)
+
+	return pheromones
 }
 
-func buildPheromonePoints(pheromones *list.List, maxPheromones int) {
-	pheromonePoints = make([]pheromonePoint, maxPheromones)
+// Render renders the pheromones
+func (pheromones *Pheromones) Render() {
+	pheromones.Program.Use()
+
 	idx := 0
-	var pheromone *sim.Pheromone
-	for e := pheromones.Front(); e != nil && idx < maxPheromones; e = e.Next() {
-		pheromone = e.Value.(*sim.Pheromone)
-		pointToScreen(pheromone.Position, &pheromonePoints[idx].position)
-		pheromonePoints[idx].intensity = pheromone.Intensity
+	var simPheromone *sim.Pheromone
+	for e := pheromones.World.Pheromones.Front(); e != nil; e = e.Next() {
+		simPheromone = e.Value.(*sim.PheromoneStorageItem).Pheromone
+		pointToScreen(simPheromone.Position, &pheromones.Points[idx].position)
+		pheromones.Points[idx].intensity = simPheromone.Intensity
 		idx++
 	}
-}
 
-func updatePheromonePoints(pheromones *list.List, maxPheromones int) {
-	idx := 0
-	var pheromone *sim.Pheromone
-	for e := pheromones.Front(); e != nil && idx < maxPheromones; e = e.Next() {
-		pheromone = e.Value.(*sim.Pheromone)
-		pointToScreen(pheromone.Position, &pheromonePoints[idx].position)
-		pheromonePoints[idx].intensity = pheromone.Intensity
-		idx++
-	}
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(pheromones.PointVar)*pheromones.World.Pheromones.Len(), gl.Ptr(pheromones.Points))
+	gl.DrawArrays(gl.POINTS, 0, int32(pheromones.World.Pheromones.Len()))
 }

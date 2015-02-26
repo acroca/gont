@@ -5,6 +5,7 @@ import (
 
 	"github.com/acroca/gont/sim"
 	"github.com/acroca/gont/ui"
+	"github.com/acroca/gont/util"
 )
 
 var (
@@ -15,6 +16,7 @@ func main() {
 	flag.Parse()
 	world := sim.NewWorld(*numAnts)
 	window := ui.NewWindow(world)
+	go util.Stats.Start()
 	go world.Start()
 	window.Open()
 }

@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/acroca/gont/util"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 func loadDataFile(filePath string) string {
@@ -37,9 +37,9 @@ func createTexture(rgbaImg *image.NRGBA) (uint32, error) {
 	return texture, nil
 }
 
-func pointToScreen(point *util.Point, out *([2]float32)) {
-	out[0] = float32((2 * point.X) - 1)
-	out[1] = float32((2 * point.Y) - 1)
+func pointToScreen(point mgl32.Vec2, out *([2]float32)) {
+	out[0] = (2 * point.X()) - 1
+	out[1] = (2 * point.Y()) - 1
 }
 
 func makeShader(shaderType uint32, source string) uint32 {
