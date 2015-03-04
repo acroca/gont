@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"math/rand"
+	"time"
 
 	"github.com/acroca/gont/sim"
 	"github.com/acroca/gont/ui"
@@ -14,6 +16,7 @@ var (
 
 func main() {
 	flag.Parse()
+	rand.Seed(time.Now().UTC().UnixNano())
 	world := sim.NewWorld(*numAnts)
 	window := ui.NewWindow(world)
 	go util.Stats.Start()

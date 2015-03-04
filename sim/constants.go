@@ -10,5 +10,5 @@ const (
 	antPheromoneFrequency   = (500 / simSpeed) * time.Millisecond
 	pheromoneDuration       = (25000 / simSpeed) * time.Millisecond
 
-	pheromoneIndexParts = 100
+	pheromoneIndexParts = 30
 )

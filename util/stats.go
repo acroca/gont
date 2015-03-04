@@ -3,12 +3,14 @@ package util
 import (
 	"fmt"
 	"runtime"
+	"sync"
 	"time"
 )
 
 type stats struct {
 	Frames int
 	Steps  int
+	Mutex  sync.Mutex
 }
 
 var (
@@ -24,6 +26,8 @@ func (stats *stats) Start() {
 	}
 }
 func (stats *stats) Print() {
+	stats.Mutex.Lock()
+	defer stats.Mutex.Unlock()
 	runtime.ReadMemStats(&m)
 	fmt.Printf("FPS: %d\tSPS: %d\tMem: %d\n", stats.Frames, stats.Steps, m.Alloc)
 	stats.Frames = 0

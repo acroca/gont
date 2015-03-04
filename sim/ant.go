@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"container/list"
 	"math"
 	"math/rand"
 	"time"
@@ -13,6 +14,7 @@ import (
 type Ant struct {
 	Position  mgl32.Vec2
 	Direction *util.Direction
+	IsRed     bool
 
 	timeSinceLastPheromone time.Duration
 }
@@ -22,12 +24,28 @@ func NewAnt(position mgl32.Vec2) *Ant {
 	ant := &Ant{
 		Position:  position,
 		Direction: util.RandomDirection(),
+		IsRed:     false,
 	}
 	return ant
 }
 
 // Move implements the ant movement
-func (ant *Ant) Move(d time.Duration) {
+func (ant *Ant) Move(d time.Duration, pheromones *list.List) {
+	ant.orientate(d, pheromones)
+	ant.walk(d)
+}
+
+// DropPheromone implements a pheromone if the ant drops it
+func (ant *Ant) DropPheromone(d time.Duration) *Pheromone {
+	ant.timeSinceLastPheromone += d
+	if ant.timeSinceLastPheromone > antPheromoneFrequency {
+		ant.timeSinceLastPheromone -= antPheromoneFrequency
+		return NewPheromone(ant.Position)
+	}
+	return nil
+}
+
+func (ant *Ant) walk(d time.Duration) {
 	ant.Position = ant.Position.Add(mgl32.Vec2{
 		float32(math.Cos(float64(ant.Direction.Angle)) * d.Seconds() * antMovementPerSecond),
 		float32(math.Sin(float64(ant.Direction.Angle)) * d.Seconds() * antMovementPerSecond),
@@ -48,15 +66,9 @@ func (ant *Ant) Move(d time.Duration) {
 		ant.Position = ant.Position.Add(mgl32.Vec2{0, -ant.Position.Y()})
 		ant.Direction.MirrorX()
 	}
-	ant.Direction.Angle += float32(((2 * rand.Float64()) - 1) * d.Seconds() * antMaxRotationPerSecond)
+
 }
 
-// DropPheromone implements a pheromone if the ant drops it
-func (ant *Ant) DropPheromone(d time.Duration) *Pheromone {
-	ant.timeSinceLastPheromone += d
-	if ant.timeSinceLastPheromone > antPheromoneFrequency {
-		ant.timeSinceLastPheromone -= antPheromoneFrequency
-		return NewPheromone(ant.Position)
-	}
-	return nil
+func (ant *Ant) orientate(d time.Duration, pheromones *list.List) {
+	ant.Direction.Angle += float32(((2 * rand.Float64()) - 1) * d.Seconds() * antMaxRotationPerSecond)
 }

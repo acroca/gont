@@ -73,12 +73,16 @@ func (w *Window) Open() error {
 	for !w.window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+		w.world.Mutex.Lock()
 		pheromones.Render()
 		hole.Render()
 		food.Render()
 		ants.Render()
+		w.world.Mutex.Unlock()
 
+		util.Stats.Mutex.Lock()
 		util.Stats.Frames++
+		util.Stats.Mutex.Unlock()
 
 		w.window.SwapBuffers()
 		glfw.PollEvents()

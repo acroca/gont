@@ -11,6 +11,7 @@ import (
 type antPoint struct {
 	position  [2]float32
 	direction float32
+	redAnt    float32
 }
 
 // Ants models a ui element for a ant
@@ -43,6 +44,13 @@ func NewAnts(world *sim.World) *Ants {
 			Stride:        int32(binary.Size(ants.PointVar)),
 			Offset:        int(unsafe.Offsetof(ants.PointVar.direction)),
 		},
+		{
+			Type:          AttributeFloat,
+			AttributeName: "redAnt",
+			Amount:        1,
+			Stride:        int32(binary.Size(ants.PointVar)),
+			Offset:        int(unsafe.Offsetof(ants.PointVar.redAnt)),
+		},
 	}
 	ants.Program = NewProgram(
 		binary.Size(ants.PointVar)*len(ants.Points),
@@ -62,6 +70,11 @@ func (ants *Ants) Render() {
 	for idx := range ants.World.Ants {
 		pointToScreen(ants.World.Ants[idx].Position, &ants.Points[idx].position)
 		ants.Points[idx].direction = ants.World.Ants[idx].Direction.Angle
+		if ants.World.Ants[idx].IsRed {
+			ants.Points[idx].redAnt = 1.0
+		} else {
+			ants.Points[idx].redAnt = 0.0
+		}
 	}
 
 	gl.BufferSubData(gl.ARRAY_BUFFER, 0, binary.Size(ants.PointVar)*len(ants.Points), gl.Ptr(ants.Points))

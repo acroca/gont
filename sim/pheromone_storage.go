@@ -11,7 +11,7 @@ import (
 type PheromoneStorageItem struct {
 	Pheromone         *Pheromone
 	AllElement        *list.Element
-	PartitionElements [3]([3]*list.Element)
+	PartitionElements [9]*list.Element
 }
 
 // PheromoneStorage models a pheromone storage
@@ -46,7 +46,7 @@ func (storage *PheromoneStorage) Add(pheromone *Pheromone) {
 	for i := 0; i < 9; i++ {
 		partition := storage.Partition(pheromone.Position, (i%3)-1, (i/3)-1)
 		if partition != nil {
-			item.PartitionElements[i%3][i/3] = partition.PushBack(item)
+			item.PartitionElements[i] = partition.PushBack(item)
 		}
 	}
 
@@ -59,7 +59,7 @@ func (storage *PheromoneStorage) Remove(pheromone *Pheromone) {
 	for i := 0; i < 9; i++ {
 		partition := storage.Partition(pheromone.Position, (i%3)-1, (i/3)-1)
 		if partition != nil {
-			partition.Remove(pheromone.PheromoneStorageItem.PartitionElements[i%3][i/3])
+			partition.Remove(pheromone.PheromoneStorageItem.PartitionElements[i])
 		}
 	}
 

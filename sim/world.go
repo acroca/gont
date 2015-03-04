@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"sync"
 	"time"
 
 	"github.com/acroca/gont/util"
@@ -14,6 +15,7 @@ type World struct {
 	Food       *Food
 	Hole       *Hole
 	Stop       bool
+	Mutex      sync.Mutex
 
 	MaxPheromones int
 }
@@ -30,7 +32,10 @@ func NewWorld(maxAnts int) *World {
 		MaxPheromones: maxPheromones,
 	}
 	for i := 0; i < maxAnts; i++ {
-		world.Ants[i] = NewAnt(world.Hole.Position)
+		world.Ants[i] = NewAnt(util.RandomPoint())
+		if i == 0 {
+			world.Ants[i].IsRed = true
+		}
 	}
 	return world
 }
@@ -47,27 +52,32 @@ func (world *World) Start() {
 		elapsed = now.Sub(t)
 		t = now
 		world.Step(elapsed)
-		util.Stats.Steps++
 	}
 
 }
 
 // Step runs a simulation step
 func (world *World) Step(elapsed time.Duration) {
+	world.Mutex.Lock()
+	defer world.Mutex.Unlock()
 	var pheromone *Pheromone
+	for e := world.Pheromones.Front(); e != nil; {
+		pheromone = e.Value.(*PheromoneStorageItem).Pheromone
+		e = e.Next()
+		pheromone.Decay(elapsed)
+		if pheromone.Intensity < 0 {
+			world.Pheromones.Remove(pheromone)
+		}
+	}
 	for _, ant := range world.Ants {
-		ant.Move(elapsed)
+		ant.Move(elapsed, world.Pheromones.Partition(ant.Position, 0, 0))
 		pheromone = ant.DropPheromone(elapsed)
 		if pheromone != nil && world.Pheromones.Len() <= world.MaxPheromones {
 			world.Pheromones.Add(pheromone)
 		}
 	}
 
-	for e := world.Pheromones.Front(); e != nil; e = e.Next() {
-		pheromone = e.Value.(*PheromoneStorageItem).Pheromone
-		pheromone.Decay(elapsed)
-		if pheromone.Intensity < 0 {
-			world.Pheromones.Remove(pheromone)
-		}
-	}
+	util.Stats.Mutex.Lock()
+	util.Stats.Steps++
+	util.Stats.Mutex.Unlock()
 }
